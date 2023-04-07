@@ -16,7 +16,6 @@ export class PartySupplier {
   }
 
   public async makeRequest({ method = "PUT" }): Promise<AxiosResponse> {
-    console.log("url", `${this.URL}/${this.puuid}`);
     const response = await this.apiRequest.request({
       url: `${this.URL}/${this.puuid}`,
       method: method,
