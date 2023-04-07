@@ -3,12 +3,12 @@ import * as https from "https";
 
 interface IRequestParams {
   url: string;
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE" | string;
   headers?: Record<string, string>;
   body?: any;
 }
 
-export class Request {
+export class ApiRequest {
   private ciphers: string;
   private agent: https.Agent;
 
