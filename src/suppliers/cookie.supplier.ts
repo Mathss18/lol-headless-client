@@ -1,5 +1,5 @@
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 import { v4 as uuidv4 } from "uuid";
 import base64url from "base64url";
 import { AxiosResponse } from "axios";
@@ -22,7 +22,6 @@ export class CookieSupplier {
     method = "POST",
     body = this.body,
   }): Promise<AxiosResponse> {
-    console.log('COOKIE TYPE: ', this._cookieType)
     const response = await this.apiRequest.request({
       url: this.URL,
       method: method,
@@ -65,7 +64,7 @@ export class CookieSupplier {
   public set additionalCookie(value: string | null) {
     this._additionalCookie = value;
   }
-  
+
   public set cookieType(value: "CLIENT" | "LOL") {
     this._cookieType = value;
   }
@@ -84,8 +83,6 @@ export class CookieSupplier {
     }
 
     const result = builder.join("; ") + ";";
-
-    console.debug("[COMPOSITE COOKIE] " + result);
     return result;
   }
 
@@ -100,7 +97,6 @@ export class CookieSupplier {
       cfBmElement.indexOf(";", cfBmElement.indexOf("__cf_bm"))
     );
 
-    console.debug("[CFBM COOKIE] " + cfBmString);
     return cfBmString;
   }
 }

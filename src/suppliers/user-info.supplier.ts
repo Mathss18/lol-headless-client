@@ -1,8 +1,8 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 
-export class UserInfo {
+export class UserInfoSupplier {
   readonly URL = "https://auth.riotgames.com/userinfo";
 
   constructor(private apiRequest: ApiRequest, private jwt: string) {

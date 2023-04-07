@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 
 export class EntitlementSupplier {
   readonly URL = "https://entitlements.auth.riotgames.com/api/token/v1";

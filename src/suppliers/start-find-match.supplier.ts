@@ -1,25 +1,25 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 
-export class QueueSupplier {
-  readonly URL = "https://usw2-green.pp.sgp.pvp.net/login-queue/v2/login/products/lol/regions/br1";
+export class StartFindMatchSupplier {
+  readonly URL = "https://br-red.lol.sgp.pvp.net/parties-ledge/v1/parties";
 
   constructor(
     private apiRequest: ApiRequest,
     private jwt: string,
-    private entitlementJwt: string,
-    private userInfoJwt: string
+    private partyId: string,
+    private puuid: string,
   ) {
     this.apiRequest = apiRequest;
   }
 
   public async makeRequest({ method = "POST" }): Promise<AxiosResponse> {
     const response = await this.apiRequest.request({
-      url: this.URL,
+      url: `${this.URL}/${this.partyId}/members/${this.puuid}/startAction`,
       method: method,
       headers: this.headers,
-      body: this.body,
+      body: {},
     });
     return response;
   }
@@ -29,19 +29,9 @@ export class QueueSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-login)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-lobby)`,
     };
 
     return headers;
-  }
-
-  public get body() {
-    const body = {
-      clientName: "lcu",
-      entitlements: this.entitlementJwt,
-      userinfo: this.userInfoJwt,
-    };
-
-    return body;
   }
 }

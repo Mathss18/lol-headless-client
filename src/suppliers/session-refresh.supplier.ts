@@ -1,10 +1,10 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 
-export class SessionSupplier {
+export class SessionRefreshSupplier {
   readonly URL =
-    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/create";
+    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/refresh";
 
   constructor(private apiRequest: ApiRequest, private jwt: string) {
     this.apiRequest = apiRequest;
@@ -32,12 +32,7 @@ export class SessionSupplier {
   }
 
   public get body() {
-    const body = {
-      product: "lol",
-      claims: { cname: "lcu" },
-      puuid: "d100ae6c-06a9-5aae-a535-f687de6d5d52",
-      region: "br1",
-    };
+    const body = { lst: this.jwt };
 
     return body;
   }

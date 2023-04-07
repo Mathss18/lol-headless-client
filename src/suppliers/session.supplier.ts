@@ -1,12 +1,16 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/api-request";
-import { VersionSupplier } from "./version.supplier";
+import { VersionSupplier } from "../helpers/version.helper";
 
-export class SessionRefreshSupplier {
+export class SessionSupplier {
   readonly URL =
-    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/refresh";
+    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/create";
 
-  constructor(private apiRequest: ApiRequest, private jwt: string) {
+  constructor(
+    private apiRequest: ApiRequest,
+    private jwt: string,
+    private puuid: string
+  ) {
     this.apiRequest = apiRequest;
   }
 
@@ -32,7 +36,12 @@ export class SessionRefreshSupplier {
   }
 
   public get body() {
-    const body = { lst: this.jwt };
+    const body = {
+      product: "lol",
+      claims: { cname: "lcu" },
+      puuid: this.puuid,
+      region: "br1",
+    };
 
     return body;
   }
