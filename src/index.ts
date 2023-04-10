@@ -1,12 +1,14 @@
 import { VirtualClient } from "./client/VirtualClient";
 import { Gamemode } from "./enums/gamemode.enum";
 import { Role } from "./enums/role.enum";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 class Main {
   async start() {
     try {
       const virtualClient = new VirtualClient();
-      await virtualClient.login("Lannydh", "88121747m");
+      await virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
       await virtualClient.createLobby();
       await virtualClient.selectGamemode(Gamemode.SOLO_DUO);
       await virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
