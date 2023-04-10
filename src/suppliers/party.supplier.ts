@@ -39,13 +39,19 @@ export class PartySupplier {
   public get body() {
     const body = {
       accountId: this.accountId,
+      createdAt: 0,
+      currentParty: null,
+      eligibilityHash: 0,
+      parties: null,
       platformId: "BR1",
       puuid: this.puuid,
       registration: {
         gameClientVersion: VersionSupplier.gameVersion,
         inventoryToken: null,
       },
+      serverUtcMillis: 0,
       summonerId: this.id,
+      version: 0,
     };
     return body;
   }

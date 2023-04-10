@@ -6,6 +6,7 @@ interface IRequestParams {
   method?: "GET" | "POST" | "PUT" | "DELETE" | string;
   headers?: Record<string, string>;
   body?: any;
+  params?: Record<string, string>;
 }
 
 export class ApiRequest {
@@ -32,6 +33,7 @@ export class ApiRequest {
     method = "GET",
     headers = {},
     body,
+    params,
   }: IRequestParams): Promise<any> {
     try {
       const config: AxiosRequestConfig = {
@@ -40,6 +42,7 @@ export class ApiRequest {
         headers: { ...headers, "User-Agent": this.userAgent },
         data: body,
         httpsAgent: this.agent,
+        params
       };
 
       const response: AxiosResponse = await axios(config);

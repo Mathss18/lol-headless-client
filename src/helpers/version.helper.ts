@@ -9,6 +9,6 @@ export class VersionSupplier {
         return "13.7.501.1316";
     }
     public static get gameVersion(): string {
-        return "13.7.5022586+branch.releases-13-7.code.public.content.release";
+        return "13.7.5027579+branch.releases-13-7.code.public.content.release";
     }
 }

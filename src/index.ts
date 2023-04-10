@@ -13,8 +13,21 @@ class Main {
       await virtualClient.selectGamemode(Gamemode.SOLO_DUO);
       await virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
       await virtualClient.startFindingMatch();
+
+      let found = false;
+      const acceptInterval = setInterval(async () => {
+        found = await virtualClient.acceptMatch();
+        if (found) {
+          clearInterval(acceptInterval);
+          const championInterval = setInterval(async () => {
+            await virtualClient.selectChampion();
+          }, 3000);
+        }
+      }, 2000);
+
+      // @todo: select champion
     } catch (error) {
-      console.log(error)
+      console.dir(error);
     }
   }
 }

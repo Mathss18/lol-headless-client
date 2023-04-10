@@ -16,6 +16,8 @@ import { GamemodeSupplier } from "../suppliers/gamemode.supplier";
 import { Role } from "../enums/role.enum";
 import { RoleSupplier } from "../suppliers/role.supplier";
 import { StartFindMatchSupplier } from "../suppliers/start-find-match.supplier";
+import { AcceptMatchSupplier } from "../suppliers/accept-match.supplier";
+import { SelectChampionSupplier } from "../suppliers/select-champion.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -119,8 +121,37 @@ export class VirtualClient {
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
-    console.log(data);
     Logger.green("Finding match! \n");
+  }
+
+  public async acceptMatch(): Promise<boolean> {
+    const startMatchSupplier = new AcceptMatchSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._userData.accountId,
+      this._userData.id
+    );
+
+    const { data } = await startMatchSupplier.makeRequest({});
+    if (data?.payload !== undefined) {
+      Logger.green("Match accepted! \n");
+      return true;
+    } else {
+      Logger.green("Trying to accept match... \n");
+      return false;
+    }
+  }
+
+  public async selectChampion() {
+    const selectChampionSupplier = new SelectChampionSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._userData.sub,
+      22
+    );
+
+    const { data } = await selectChampionSupplier.makeRequest({});
+    console.log(data);
   }
 
   private async getTokens(cookieType: "CLIENT" | "LOL") {
