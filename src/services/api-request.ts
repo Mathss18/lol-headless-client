@@ -46,7 +46,7 @@ export class ApiRequest {
 
       return response;
     } catch (error: any) {
-      throw new Error(`Error: ${error.message}`);
+      throw error;
     }
   }
 }
