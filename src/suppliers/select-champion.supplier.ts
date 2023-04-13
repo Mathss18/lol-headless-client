@@ -21,7 +21,7 @@ export class SelectChampionSupplier {
       method: method,
       headers: this.headers,
       body: this.body,
-      params: { playerId: '9f86dd98-95e5-5fa5-ab99-2d3e59277356', scopeItemId: `${this.championId}` },
+      params: { playerId: this.puuid, scopeItemId: `${this.championId}` },
     });
     return response;
   }
