@@ -11,6 +11,8 @@ class Main {
     try {
       const virtualClient = new VirtualClient();
       await virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
+      this.test(virtualClient);
+      return;
       await virtualClient.createLobby();
       await virtualClient.selectGamemode(Gamemode.SOLO_DUO);
       await virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
@@ -33,28 +35,33 @@ class Main {
     }
   }
 
-  async test() {
-    const hostname = "feapp.br1.lol.pvp.net";
+  async test(virtualClient) {
+    const host = "feapp.br1.lol.pvp.net";
     const port = 2099;
 
-    const client = new RtmpClient(hostname, port);
-    // const client = new Client(hostname, port);
+    const client = new RtmpClient(
+      host,
+      port,
+      virtualClient.getAllTokens(),
+      virtualClient.userData()
+    );
 
     try {
       await client.connect();
       await client.authorize();
+      await client.startListening();
       await client.connectToRiot();
+      await client.login();
+      await client.selectChampion();
       console.log("Connected and handshake completed.");
-
-      // Implement and call other methods for sending and receiving messages
     } catch (error) {
       console.error("Failed to connect or handshake:", error);
     } finally {
-      client.close();
+      // client.close();
     }
   }
 }
 
 const main = new Main();
-// main.start();
-main.test();
+main.start();
+// main.test();

@@ -47,6 +47,19 @@ export class AMFEncoder {
   private buffer: Buffer = Buffer.alloc(0);
   private timestamp: number = Date.now();
 
+  public encodeInvoke(id: number, data: any): Buffer {
+    this.buffer = Buffer.alloc(0);
+    this.writeByte(0x00);
+    this.writeByte(0x05);
+    this.writeAMF0Integer(id);
+    this.writeByte(0x05);
+    this.writeByte(AMF0Type.AMF3);
+    this.encode(data);
+    this.addHeader();
+    return this.buffer;
+
+  }
+
   public encodeConnect(map: PropertyMap): Buffer {
     this.buffer = Buffer.alloc(0);
     this.writeAMF0UTF8String("connect");

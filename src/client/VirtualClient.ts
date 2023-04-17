@@ -18,12 +18,17 @@ import { RoleSupplier } from "../suppliers/role.supplier";
 import { StartFindMatchSupplier } from "../suppliers/start-find-match.supplier";
 import { AcceptMatchSupplier } from "../suppliers/accept-match.supplier";
 import { SelectChampionSupplier } from "../suppliers/select-champion.supplier";
+import { SiptSupplier } from "../suppliers/sipt.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
   private _sessionToken: string;
   private _lolToken: string;
   private _riotToken: string;
+  private _userInfoToken: string;
+  private _siptToken: string;
+  private _queueToken: string;
+  private _entitlementsToken: string;
   private _username: string;
   private _password: string;
   private _userData: UserData;
@@ -51,11 +56,17 @@ export class VirtualClient {
       this._lolToken = lolParsedTokens.access_token;
       Logger.cyan(`[LoL Token]: ${this._lolToken} \n`);
 
-      this._sessionToken = await this.getSession();
+      this._userInfoToken = await this.getUserInfo();
+
+      (this._entitlementsToken = await this.getEntitlements()),
+        (this._queueToken = await this.getQueue()),
+        (this._sessionToken = await this.getSession());
 
       const dataGeopas = await this.getGeopas();
 
       this._userData = await this.getUserData();
+
+      this._siptToken = await this.getSipt();
 
       setInterval(async () => {
         this._sessionToken = await this.getRefreshSession();
@@ -186,6 +197,7 @@ export class VirtualClient {
       this._lolToken
     );
     const { data } = await riotClientUserInfo.makeRequest({});
+    Logger.cyan(`[User Info Token]: ${data} \n`);
     return data;
   }
 
@@ -203,8 +215,8 @@ export class VirtualClient {
     const queueSupplier = new QueueSupplier(
       this._apiRequest,
       this._lolToken,
-      await this.getEntitlements(),
-      await this.getUserInfo()
+      this._entitlementsToken,
+      this._userInfoToken
     );
 
     const { data } = await queueSupplier.makeRequest({});
@@ -215,7 +227,7 @@ export class VirtualClient {
   private async getSession() {
     const sessionSupplier = new SessionSupplier(
       this._apiRequest,
-      await this.getQueue(),
+      this._queueToken,
       new RiotClientUser(this._riotToken).getSub()
     );
     const { data } = await sessionSupplier.makeRequest({});
@@ -229,6 +241,13 @@ export class VirtualClient {
       this._lolToken
     );
     const { data } = await geopassSupplier.makeRequest({});
+    return data;
+  }
+
+  private async getSipt() {
+    const siptSupplier = new SiptSupplier(this._apiRequest, this._sessionToken);
+    const { data } = await siptSupplier.makeRequest({});
+    Logger.cyan(`[Sipt Token]: ${data} \n`);
     return data;
   }
 
@@ -252,4 +271,32 @@ export class VirtualClient {
     Logger.magenta(`[(REFRESH) Session Token]: ${data} \n`);
     return data;
   }
+
+  public getAllTokens(): PublicTokens {
+    return {
+      riotToken: this._riotToken,
+      lolToken: this._lolToken,
+      entitlementsToken: this._entitlementsToken,
+      userInfoToken: this._userInfoToken,
+      queueToken: this._queueToken,
+      sessionToken: this._sessionToken,
+      // geopasToken: this._geopasToken,
+      siptToken: this._siptToken,
+    }
+  }
+
+  public userData(): UserData {
+    return this._userData;
+  }
+}
+
+export interface PublicTokens {
+  riotToken: string;
+  lolToken: string;
+  entitlementsToken: string;
+  userInfoToken: string;
+  queueToken: string;
+  sessionToken: string;
+  // geopasToken: string;
+  siptToken: string;
 }
