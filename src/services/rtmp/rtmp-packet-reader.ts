@@ -1,11 +1,13 @@
-import { AMFDecoder } from "./amf-decoder";
+import { Logger } from "../../utils/logger.util";
+import { AMFDecoder } from "./amf/amf-decoder";
 import { RtmpClient } from "./rtmp-client.service";
 import { RtmpPacket } from "./rtmp-packet";
 import TypedObject from "./typed-object";
 
 export class RtmpPacketReader {
-  private packets: Map<number, RtmpPacket> = new Map();
+  public packets: Map<string, TypedObject> = new Map();
   private decoder = new AMFDecoder();
+  private tag: string | null = null;
   constructor(private client: RtmpClient) {}
 
   public handleReceivedData(data: Buffer): void {
@@ -63,10 +65,17 @@ export class RtmpPacketReader {
     }
   }
 
+  public getPacketByTag(tag: string): TypedObject {
+    return this.packets.get(tag);
+  }
+
+  public setTag(tag: string): void {
+    this.tag = tag;
+  }
+
   private handleRtmpPacket(packet: RtmpPacket): void {
     const messageType = packet.getMessageType();
     if (messageType === undefined) return;
-    console.log(`Received RTMP message type: ${messageType}`);
     let result: TypedObject;
     switch (messageType) {
       case 0x01: // Set Chunk Size
@@ -82,7 +91,6 @@ export class RtmpPacketReader {
         // Handle Window Acknowledgement Size message
         break;
       case 0x06: // Set Peer Bandwidth
-        this.handleSetPeerBandwidth(packet);
         // Handle Set Peer Bandwidth message
         break;
       case 0x08: // Audio Message
@@ -107,36 +115,18 @@ export class RtmpPacketReader {
         console.warn(`Unhandled RTMP message type: ${messageType}`);
     }
     if (result) {
+      Logger.cyan("[rtmp] Received packet: \n");
+      console.log(result.getTypedObject("data"));
+
       if (result.getTypedObject("data").getString("id")) {
         this.client.DSId = result.getTypedObject("data").getString("id");
-        console.log(`ID: ${result.getTypedObject("data").getString("body")}`)
-      }
-      else{
-        console.log(result.getTypedObject("data").getString("body"))
+        Logger.green(`DSiD: ${this.client.DSId}\n`);
+      } else {
+        if (this.tag) {
+          this.packets.set(this.tag, result);
+          this.tag = null;
+        }
       }
     }
-  }
-
-  private handleSetPeerBandwidth(packet: RtmpPacket): void {
-    const buffer = packet.getBody();
-    const windowSize = buffer.readUInt32BE(0);
-    const limitType = buffer.readUInt8(4);
-
-    // Update your client's bandwidth settings here
-    console.log(
-      `Server set peer bandwidth: windowSize = ${windowSize}, limitType = ${limitType}`
-    );
-  }
-
-  private getDSid(packet: RtmpPacket): string | null {
-    const packetBodyStr = packet.getBody().toString();
-
-    // Regular expression to search for the ID pattern
-    const idRegex =
-      /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/;
-
-    // Extract the ID using the regex
-    const idMatch = packetBodyStr.match(idRegex);
-    return idMatch ? idMatch[0] : null;
   }
 }

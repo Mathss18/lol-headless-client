@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios";
-import { ApiRequest } from "src/services/api-request";
+import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
 
 export class StartFindMatchSupplier {

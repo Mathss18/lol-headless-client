@@ -1,13 +1,14 @@
 import * as net from "net";
 import * as tls from "tls";
 import { v4 as uuidv4 } from "uuid";
-import { Handshake } from "./handshake";
+import { Handshake } from "./handshake/handshake";
 import { RtmoInfoBuilder } from "./rtmp-info.builder";
-import { AMFEncoder } from "./amf-encoder";
 import { RtmpPacketReader } from "./rtmp-packet-reader";
 import TypedObject from "./typed-object";
-import { PublicTokens } from "../client/VirtualClient";
-import { UserData } from "../suppliers/user-data.supplier";
+import { PublicTokens } from "../../client/VirtualClient";
+import { UserData } from "../../suppliers/user-data.supplier";
+import { AMFEncoder } from "./amf/amf-encoder";
+import { Logger } from "../../utils/logger.util";
 
 export class RtmpClient {
   private socket!: tls.TLSSocket;
@@ -15,8 +16,12 @@ export class RtmpClient {
   private rtmpPacketReader: RtmpPacketReader;
   private baseRtmpInfo: RtmoInfoBuilder;
   public DSId: string | null;
+  private token: string;
+  private accountId: number;
+
   private invokeID = 2;
   private messageCounter = 0;
+  private heartbeatCounter = 0;
   private amfEncoder = new AMFEncoder();
 
   constructor(
@@ -49,7 +54,8 @@ export class RtmpClient {
 
         this.socket
           .on("secureConnect", () => {
-            console.log("TLS connected");
+            Logger.green("TLS connected");
+            this.rtmpConnected = true;
             resolve();
           })
           .on("error", (error) => {
@@ -65,12 +71,12 @@ export class RtmpClient {
     });
   }
 
-  public async authorize() {
+  public async handshake() {
     return new Promise<void>((resolve, reject) => {
       const handshake = new Handshake();
       handshake.initialize(this.socket);
       handshake.once("done", () => {
-        console.log("Handshake done");
+        Logger.green("Handshake done");
         this.socket.removeAllListeners();
         resolve();
       });
@@ -95,7 +101,7 @@ export class RtmpClient {
     });
 
     this.socket.on("close", () => {
-      console.log("Socket closed");
+      Logger.red("Socket closed");
     });
   }
 
@@ -114,52 +120,142 @@ export class RtmpClient {
         );
         setTimeout(() => {
           resolve();
-        }, 5000);
-        // resolve();
+        }, 2000);
       } catch (error) {
         reject(error);
       }
     });
   }
 
-  public async login() {
-    const typedObject = new TypedObject(
-      "com.riotgames.platform.login.AuthenticationCredentials"
-    );
-    typedObject.set("macAddress", "000000000000");
-    typedObject.set("authToken", "");
-    typedObject.set("userInfoTokenJwe", this.tokens.userInfoToken);
-    typedObject.set("leagueSessionToken", this.tokens.sessionToken);
-    typedObject.set("sessionIpToken", this.tokens.siptToken);
-    typedObject.set("partnerCredentials", this.tokens.lolToken);
-    typedObject.set("domain", "lolclient.lol.riotgames.com");
-    typedObject.set("clientVersion", "LCU");
-    typedObject.set("locale", "en_GB");
-    typedObject.set("username", process.env.USERNAME);
-    typedObject.set(
-      "operatingSystem",
-      '{"edition":"Professional, x64","platform":"Windows","versionMajor":"10","versionMinor":""}'
-    );
-    typedObject.set("securityAnswer", null);
-    typedObject.set("oldPassword", null);
-    typedObject.set("password", null);
+  public async login(): Promise<void> {
+    return new Promise(async (resolve, _) => {
+      this.rtmpPacketReader.setTag("login");
+      const typedObject = new TypedObject(
+        "com.riotgames.platform.login.AuthenticationCredentials"
+      );
+      typedObject.set("macAddress", "000000000000");
+      typedObject.set("authToken", "");
+      typedObject.set("userInfoTokenJwe", this.tokens.userInfoToken);
+      typedObject.set("leagueSessionToken", this.tokens.sessionToken);
+      typedObject.set("sessionIpToken", this.tokens.siptToken);
+      typedObject.set("partnerCredentials", this.tokens.lolToken);
+      typedObject.set("domain", "lolclient.lol.riotgames.com");
+      typedObject.set("clientVersion", "LCU");
+      typedObject.set("locale", "en_GB");
+      typedObject.set("username", process.env.USERNAME);
+      typedObject.set(
+        "operatingSystem",
+        '{"edition":"Professional, x64","platform":"Windows","versionMajor":"10","versionMinor":""}'
+      );
+      typedObject.set("securityAnswer", null);
+      typedObject.set("oldPassword", null);
+      typedObject.set("password", null);
 
-    const id = await this.invoke(
-      this.wrap("loginService", "login", typedObject)
-    );
+      await this.invoke(this.wrap("loginService", "login", typedObject));
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
   }
 
-  public async selectChampion() {
-    const typedObject = new TypedObject(
-      "com.riotgames.platform.login.AuthenticationCredentials"
+  public async login2(): Promise<void> {
+    const interval = 120000; // 2 min in milies
+    return new Promise(async (resolve, _) => {
+      const body = this.rtmpPacketReader
+        .getPacketByTag("login")
+        .getTypedObject("data")
+        .getTypedObject("body");
+
+      this.token = body.getString("token");
+      this.accountId = body
+        .getTypedObject("accountSummary")
+        .getLong("accountId");
+
+      setInterval(() => {
+        this.heartbeat();
+      }, interval);
+
+      const channels: string[] = ["gn", "cn", "bc"];
+
+      for (let i = 1; i >= 0; i--) {
+        for (const channel of channels) {
+          this.subscribe(`${channel}-${this.accountId}`, i);
+        }
+      }
+
+      const buffer: Buffer = Buffer.from(
+        `${process.env.USERNAME.toLowerCase()}:${this.token}`,
+        "utf-8"
+      );
+      const base64Encoded: string = buffer.toString("base64");
+      const auth: TypedObject = this.wrap("auth", 8, base64Encoded);
+      auth.setType("flex.messaging.messages.CommandMessage");
+      this.invoke(auth);
+
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
+  }
+
+  private async subscribe(client: string, operation: number): Promise<void> {
+    const body: TypedObject = this.wrap("messagingDestination", operation, [
+      new TypedObject(),
+    ]);
+    body.setType("flex.messaging.messages.CommandMessage");
+
+    const headers: TypedObject = new TypedObject();
+    headers.set("DSEndpoint", "my-rtmp");
+    headers.set(
+      "DSSubtopic",
+      !client.startsWith("b") ? client : client.split("-")[0]
     );
+    headers.set("DSRequestTimeout", 60);
+    headers.set("DSId", this.DSId);
+
+    body.set("headers", headers);
+    body.set("clientId", client);
+
+    const id: number = await this.invoke(body);
+  }
+
+  private heartbeat(): void {
+    const data: Object[] = [
+      this.accountId,
+      this.token,
+      this.heartbeatCounter++,
+      new Date().toISOString(),
+    ];
+
+    try {
+      this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
+    } catch (e) {
+      console.error("[rtmp-out] failed to send heartbeat");
+    }
+  }
+
+  public async selectChampion(pos: number, championId: number[]): Promise<void> {
+    // choose a random champion
+    const selectedChampion = championId[Math.floor(Math.random() * championId.length)];
+    Logger.green(`Trying to select champion ${selectedChampion} at pos ${pos}`);
     const id = await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),
         "teambuilder-draft",
         "updateActionV1",
-        "{\"actionId\":1,\"championId\":22,\"completed\":true}",
+        JSON.stringify({
+          actionId: pos,
+          championId: selectedChampion,
+          completed: true,
+        }),
       ])
+    );
+  }
+
+  public async selectChampionCustom(): Promise<void> {
+    Logger.green(`Trying to select champion`);
+    const id = await this.invoke(
+      this.wrap("gameService", "selectChampionV2", [22, 22022])
     );
   }
 
@@ -203,7 +299,11 @@ export class RtmpClient {
     await this.write(data);
   }
 
-  private wrap(destination: string, operation: string, body: any): TypedObject {
+  private wrap(
+    destination: string,
+    operation: string | number,
+    body: any
+  ): TypedObject {
     const headers = new TypedObject();
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
@@ -226,6 +326,7 @@ export class RtmpClient {
     typedObject.set("body", body);
     return typedObject;
   }
+
   public async close() {
     this.socket.destroy();
   }

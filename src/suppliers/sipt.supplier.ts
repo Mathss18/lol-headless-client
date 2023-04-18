@@ -2,8 +2,9 @@ import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
 
-export class UserInfoSupplier {
-  readonly URL = "https://auth.riotgames.com/userinfo";
+export class SiptSupplier {
+  readonly URL =
+    "https://br-red.lol.sgp.pvp.net/sipt/v1/sipt/token";
 
   constructor(private apiRequest: ApiRequest, private jwt: string) {
     this.apiRequest = apiRequest;
@@ -21,7 +22,8 @@ export class UserInfoSupplier {
   public get headers() {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
-      "User-Agent": `RiotClient/${VersionSupplier.version} rso-auth (Windows;10;;Professional, x64)`,
+      Accept: "application/json",
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-login)`,
     };
 
     return headers;

@@ -1,48 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
-import { PropertyMap } from "./rtmp-info.builder";
-import TypedObject from "./typed-object";
-
-enum AMF0Type {
-  NUMBER = 0x00,
-  BOOLEAN = 0x01,
-  STRING = 0x02,
-  OBJECT = 0x03,
-  MOVIECLIP = 0x04,
-  NULL = 0x05,
-  UNDEFINED = 0x06,
-  REFERENCE = 0x07,
-  MIXEDARRAY = 0x08,
-  OBJECTTERM = 0x09,
-  ARRAY = 0x0a,
-  DATE = 0x0b,
-  LONGSTRONG = 0x0c,
-  UNSUPPORTED = 0x0d,
-  RECORDSET = 0x0e,
-  XML = 0x0f,
-  TYPEDOBJECT = 0x10,
-  AMF3 = 0x11,
-}
-
-enum AMF3Type {
-  UNDEFINED = 0x00,
-  NULL = 0x01,
-  BOOLEAN_FALSE = 0x02,
-  BOOLEAN_TRUE = 0x03,
-  INTEGER = 0x04,
-  DOUBLE = 0x05,
-  STRING = 0x06,
-  XMLDOCUMENT = 0x07,
-  DATE = 0x08,
-  ARRAY = 0x09,
-  OBJECT = 0x0a,
-  XML = 0x0b,
-  BYTEARRAY = 0x0c,
-  VECTORINT = 0x0d,
-  VECTORUNIT = 0x0e,
-  VECTORDOUBLE = 0x0f,
-  VECTOROBJECT = 0x10,
-  DICTIONARY = 0x11,
-}
+import { PropertyMap } from "../rtmp-info.builder";
+import { AMF0Type } from "./amf0-type";
+import { AMF3Type } from "./amf3-type";
+import TypedObject from "../typed-object";
 export class AMFEncoder {
   private buffer: Buffer = Buffer.alloc(0);
   private timestamp: number = Date.now();

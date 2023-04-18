@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios";
-import { ApiRequest } from "src/services/api-request";
+import { ApiRequest } from "src/services/http/api-request";
 
 export class GeopasSupplier {
   readonly URL =

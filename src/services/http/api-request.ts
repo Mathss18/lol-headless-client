@@ -42,7 +42,7 @@ export class ApiRequest {
         headers: { ...headers, "User-Agent": this.userAgent },
         data: body,
         httpsAgent: this.agent,
-        params
+        params,
       };
 
       const response: AxiosResponse = await axios(config);

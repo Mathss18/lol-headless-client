@@ -6,7 +6,7 @@ import { QueueSupplier } from "../suppliers/queue.supplier";
 import { RiotClientUser } from "../modules/riot-client";
 import { SessionRefreshSupplier } from "../suppliers/session-refresh.supplier";
 import { SessionSupplier } from "../suppliers/session.supplier";
-import { ApiRequest } from "../services/api-request";
+import { ApiRequest } from "../services/http/api-request";
 import { UserInfoSupplier } from "../suppliers/user-info.supplier";
 import { Logger } from "../utils/logger.util";
 import { PartySupplier } from "../suppliers/party.supplier";
@@ -19,6 +19,7 @@ import { StartFindMatchSupplier } from "../suppliers/start-find-match.supplier";
 import { AcceptMatchSupplier } from "../suppliers/accept-match.supplier";
 import { SelectChampionSupplier } from "../suppliers/select-champion.supplier";
 import { SiptSupplier } from "../suppliers/sipt.supplier";
+import { InventorySupplier } from "../suppliers/inventory.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -33,6 +34,7 @@ export class VirtualClient {
   private _password: string;
   private _userData: UserData;
   private _partyId: string;
+  private _inventoryToken: string;
 
   constructor() {
     this._apiRequest = new ApiRequest();
@@ -65,6 +67,8 @@ export class VirtualClient {
       const dataGeopas = await this.getGeopas();
 
       this._userData = await this.getUserData();
+
+      this._inventoryToken = await this.getInventory();
 
       this._siptToken = await this.getSipt();
 
@@ -140,12 +144,13 @@ export class VirtualClient {
       this._apiRequest,
       this._sessionToken,
       this._userData.accountId,
-      this._userData.id
+      this._userData.id,
+      this._inventoryToken
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
     if (data?.payload !== undefined) {
-      Logger.green("Match accepted! \n");
+      Logger.magenta("Match accepted! \n");
       return true;
     } else {
       Logger.green("Trying to accept match... \n");
@@ -199,6 +204,18 @@ export class VirtualClient {
     const { data } = await riotClientUserInfo.makeRequest({});
     Logger.cyan(`[User Info Token]: ${data} \n`);
     return data;
+  }
+
+  private async getInventory(): Promise<string> {
+    const inventorySupplier = new InventorySupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._userData.sub,
+      this._userData.accountId
+    );
+    const { data } = await inventorySupplier.makeRequest({});
+    Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} \n`);
+    return data.data.itemsJwt;
   }
 
   private async getEntitlements() {
@@ -282,7 +299,7 @@ export class VirtualClient {
       sessionToken: this._sessionToken,
       // geopasToken: this._geopasToken,
       siptToken: this._siptToken,
-    }
+    };
   }
 
   public userData(): UserData {

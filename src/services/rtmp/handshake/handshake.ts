@@ -71,8 +71,6 @@ export class Handshake extends Transform {
 
   _transform(chunk: any, encoding: any, callback: any) {
     try {
-      console.log("Handshake _transform state:", this.state); // Add logging of the current state
-
       if (this.state === HANDSHAKE_STATE_DONE) {
         this.push(chunk);
         return callback();

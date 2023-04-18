@@ -1,4 +1,4 @@
-import { ApiRequest } from "src/services/api-request";
+import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
 import { v4 as uuidv4 } from "uuid";
 import base64url from "base64url";

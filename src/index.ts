@@ -1,9 +1,10 @@
-import { VirtualClient } from "./client/VirtualClient";
+import { PublicTokens, VirtualClient } from "./client/VirtualClient";
 import { Gamemode } from "./enums/gamemode.enum";
 import { Role } from "./enums/role.enum";
-import { Client } from "rtmp-client";
 import * as dotenv from "dotenv";
-import { RtmpClient } from "./services/rtmp-client.service";
+import { RtmpClient } from "./services/rtmp/rtmp-client.service";
+import { Champion } from "./enums/champion.enum";
+import { exit } from "process";
 dotenv.config();
 
 class Main {
@@ -11,8 +12,7 @@ class Main {
     try {
       const virtualClient = new VirtualClient();
       await virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
-      this.test(virtualClient);
-      return;
+      const rtmpClient = await this.startRtmp(virtualClient);
       await virtualClient.createLobby();
       await virtualClient.selectGamemode(Gamemode.SOLO_DUO);
       await virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
@@ -23,19 +23,31 @@ class Main {
         found = await virtualClient.acceptMatch();
         if (found) {
           clearInterval(acceptInterval);
+          let currentPosition = 1;
           const championInterval = setInterval(async () => {
-            await virtualClient.selectChampion();
-          }, 3000);
+            await rtmpClient.selectChampion(currentPosition, [
+              Champion.ASHE,
+              Champion.AMUMU,
+              Champion.ANNIE,
+              Champion.KAYN,
+              Champion.GAREN,
+              Champion.GAREN,
+              Champion.SORAKA,
+              Champion.MISSFORTUNE,
+              Champion.RAMMUS,
+            ]);
+
+            // Increment the position, resetting it to 1 when it reaches 11
+            currentPosition = currentPosition === 10 ? 1 : currentPosition + 1;
+          }, 500);
         }
       }, 2000);
-
-      // @todo: select champion
     } catch (error) {
       console.dir(error);
     }
   }
 
-  async test(virtualClient) {
+  async startRtmp(virtualClient: VirtualClient): Promise<RtmpClient> {
     const host = "feapp.br1.lol.pvp.net";
     const port = 2099;
 
@@ -44,24 +56,23 @@ class Main {
       port,
       virtualClient.getAllTokens(),
       virtualClient.userData()
+
+      // tokens,
+      // userData
     );
 
     try {
       await client.connect();
-      await client.authorize();
+      await client.handshake();
       await client.startListening();
       await client.connectToRiot();
       await client.login();
-      await client.selectChampion();
-      console.log("Connected and handshake completed.");
+      await client.login2();
+      return client;
     } catch (error) {
       console.error("Failed to connect or handshake:", error);
-    } finally {
-      // client.close();
     }
   }
 }
-
 const main = new Main();
 main.start();
-// main.test();
