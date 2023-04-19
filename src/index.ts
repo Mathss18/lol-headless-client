@@ -6,6 +6,7 @@ import { Logger } from "./utils/logger.util";
 import { SummonerSpell } from "./enums/summoner-spell.enum";
 import * as dotenv from "dotenv";
 import { Champion } from "./enums/champion.enum";
+import { pass, user } from "./args";
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ class Main {
 
   async setupVirtualClient(): Promise<VirtualClient> {
     this.virtualClient = new VirtualClient();
-    await this.virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
+    await this.virtualClient.login(user, pass);
     return this.virtualClient;
   }
 

@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx ts-node src/index.ts",
+    "prod": "npx ts-node src/index.ts",
     "start:dev": "npx nodemon"
   },
   "keywords": [],

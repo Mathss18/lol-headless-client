@@ -11,6 +11,7 @@ import { AMFEncoder } from "./amf/amf-encoder";
 import { Logger } from "../../utils/logger.util";
 import { Champion, ChampionName } from "../../enums/champion.enum";
 import { setTimeout as sleep } from "timers/promises";
+import { user } from "../../args";
 
 export class RtmpClient {
   private socket!: tls.TLSSocket;
@@ -67,7 +68,7 @@ export class RtmpClient {
 
         this.socket
           .on("secureConnect", () => {
-            Logger.green("TLS connected");
+            Logger.green("TLS connected \n");
             this.rtmpConnected = true;
             resolve();
           })
@@ -155,7 +156,7 @@ export class RtmpClient {
       typedObject.set("domain", "lolclient.lol.riotgames.com");
       typedObject.set("clientVersion", "LCU");
       typedObject.set("locale", "en_GB");
-      typedObject.set("username", process.env.USERNAME);
+      typedObject.set("username", user);
       typedObject.set(
         "operatingSystem",
         '{"edition":"Professional, x64","platform":"Windows","versionMajor":"10","versionMinor":""}'
@@ -197,7 +198,7 @@ export class RtmpClient {
       }
 
       const buffer: Buffer = Buffer.from(
-        `${process.env.USERNAME.toLowerCase()}:${this.token}`,
+        `${user}:${this.token}`,
         "utf-8"
       );
       const base64Encoded: string = buffer.toString("base64");
@@ -258,7 +259,7 @@ export class RtmpClient {
   public async banChampion(championId: Champion): Promise<void> {
     if (this.pickState.isChampBanned || !this.pickState.isMyTurnToBan) return;
     Logger.red(`Trying to ban champion ${ChampionName[championId]}`);
-    await this.championAction(championId);
+    await this.championAction(championId, this.pickState.banActionId);
   }
 
   async selectChampionsLoop(champions: Champion[]): Promise<boolean> {
@@ -274,17 +275,17 @@ export class RtmpClient {
     const selectedChampion =
       championIds[Math.floor(Math.random() * championIds.length)];
     Logger.green(`Trying to select champion ${ChampionName[selectedChampion]}`);
-    await this.championAction(selectedChampion);
+    await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
 
-  private async championAction(selectedChampion: Champion): Promise<void> {
+  private async championAction(selectedChampion: Champion, actionId: number): Promise<void> {
     await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),
         "teambuilder-draft",
         "updateActionV1",
         JSON.stringify({
-          actionId: this.pickState.pickActionId ?? 0, // If position ID was found, use it
+          actionId: actionId,
           championId: selectedChampion,
           completed: true,
         }),
