@@ -87,9 +87,6 @@ export class AMFDecoder {
   private readTypeReferenceAMF0(): any {
     const index = (this.readByteAsInteger() << 8) | this.readByteAsInteger();
     const reference = this.objectListAMF0[index];
-    console.debug(
-      `GET AMF0 Reference ${index} as ${reference === null ? "nil" : reference}`
-    );
     return reference;
   }
 

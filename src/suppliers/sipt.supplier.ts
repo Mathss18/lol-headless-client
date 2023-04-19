@@ -23,7 +23,7 @@ export class SiptSupplier {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-login)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`,
     };
 
     return headers;

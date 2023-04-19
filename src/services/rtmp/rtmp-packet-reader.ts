@@ -117,12 +117,12 @@ export class RtmpPacketReader {
         console.warn(`Unhandled RTMP message type: ${messageType}`);
     }
     if (!result) return;
-    console.log(result.getTypedObject("data"));
+    process.env?.RTMP_LOGS === "true" && console.log(result);
 
     // packet actions
     this.setDsid(result);
     this.setTagFromResult(result);
-    this.setPickActionIdAndCheckIfAlreadyPickedChampion(result);
+    this.championSelectActions(result);
   }
 
   private setDsid(result: TypedObject) {
@@ -140,23 +140,28 @@ export class RtmpPacketReader {
     }
   }
 
-  private setPickActionIdAndCheckIfAlreadyPickedChampion(
-    result: TypedObject
-  ): void {
+  private championSelectActions(result: TypedObject): void {
     const body = result.getTypedObject("data")?.getTypedObject("body");
     const isMethodName = body?.getString("methodName") === "tbdGameDtoV1";
     const isServiceName =
       body?.getString("serviceName") === "teambuilder-draft";
 
     if (!isMethodName || !isServiceName) return;
-    if (this.client.pickState.isChampPicked) return;
+    // if (this.client.pickState.isChampPicked) return;
 
     const compresed = body.getString("payload");
     const state = this.decodeGzipBase64(compresed).championSelectState;
 
+    const subphase: string = state.subphase;
     const actionSetList: Array<any> = state.actionSetList;
     const playerCellId: number = state.localPlayerCellId;
     const currentActionIndex: number = state.currentActionSetIndex;
+
+    if (subphase === "GAME_STARTING") {
+      this.client.pickState.gameStarted = true;
+      Logger.green("=== Game started! ===");
+      return;
+    }
 
     this.client.pickState.isMyTurnToPick = this.isMyTurnToPickOrBan(
       actionSetList,
@@ -173,6 +178,7 @@ export class RtmpPacketReader {
     );
 
     this.myPickPhaseActions(actionSetList, playerCellId);
+    this.myBanPhaseActions(actionSetList, playerCellId);
   }
 
   private decodeGzipBase64(input: string): any {
@@ -181,6 +187,22 @@ export class RtmpPacketReader {
     return JSON.parse(decompressed.toString());
   }
 
+  private myBanPhaseActions(actionSetList: any[], myCellId: number): void {
+    if (this.client.pickState.bannedChampion) return; // if already banned champion, return
+    for (const group of actionSetList) {
+      for (const item of group) {
+        if (item.actorCellId === myCellId && item.type === "BAN") {
+          this.client.pickState.banActionId = item.actionId;
+          Logger.green(`Ban actionID ${this.client.pickState.banActionId} \n`);
+          if (item.completed === true) {
+            this.client.pickState.isChampBanned = true;
+            this.client.pickState.bannedChampion = item.championId;
+            Logger.red(`Banned champion: ${ChampionName[item.championId]}\n`);
+          }
+        }
+      }
+    }
+  }
   private myPickPhaseActions(actionSetList: any[], myCellId: number): void {
     if (this.client.pickState.isChampPicked) return; // if already picked champion, return
     for (const group of actionSetList) {
@@ -211,7 +233,7 @@ export class RtmpPacketReader {
 
     for (const action of currentActionSet) {
       if (action.actorCellId === actorCellId && action.type === type) {
-        Logger.green(`Is my turn to pick \n`);
+        Logger.green(`Is my turn to ${type} \n`);
         return true;
       }
     }

@@ -1,31 +1,36 @@
-import { PublicTokens, VirtualClient } from "./client/VirtualClient";
+import { VirtualClient } from "./client/VirtualClient";
 import { Gamemode } from "./enums/gamemode.enum";
 import { Role } from "./enums/role.enum";
-import * as dotenv from "dotenv";
 import { RtmpClient } from "./services/rtmp/rtmp-client.service";
-import { Champion } from "./enums/champion.enum";
-import { exit } from "process";
-import { setTimeout } from "timers/promises";
 import { Logger } from "./utils/logger.util";
 import { SummonerSpell } from "./enums/summoner-spell.enum";
+import * as dotenv from "dotenv";
+import { Champion } from "./enums/champion.enum";
 
 dotenv.config();
 
 class Main {
+  private virtualClient: VirtualClient;
+  private rtmpClient: RtmpClient;
+
   async start() {
     try {
-      const virtualClient = await this.setupVirtualClient();
-      const rtmpClient = await this.setupRtmp(virtualClient);
-      await this.startGame(virtualClient, rtmpClient);
+      this.virtualClient = await this.setupVirtualClient();
+      this.rtmpClient = await this.setupRtmp(this.virtualClient);
+      await this.startGame();
     } catch (error) {
       console.dir(error);
     }
   }
 
+  async stop() {
+    await this.virtualClient.unregisterLobby();
+  }
+
   async setupVirtualClient(): Promise<VirtualClient> {
-    const virtualClient = new VirtualClient();
-    await virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
-    return virtualClient;
+    this.virtualClient = new VirtualClient();
+    await this.virtualClient.login(process.env.USERNAME, process.env.PASSWORD);
+    return this.virtualClient;
   }
 
   async setupRtmp(virtualClient: VirtualClient): Promise<RtmpClient> {
@@ -34,55 +39,47 @@ class Main {
     const tokens = virtualClient.getAllTokens();
     const userData = virtualClient.userData();
 
-    const client = new RtmpClient(host, port, tokens, userData);
+    this.rtmpClient = new RtmpClient(host, port, tokens, userData);
 
     try {
-      await client.connect();
-      await client.handshake();
-      await client.startListening();
-      await client.connectToRiot();
-      await client.login();
-      await client.login2();
-      return client;
+      await this.rtmpClient.connect();
+      await this.rtmpClient.handshake();
+      await this.rtmpClient.startListening();
+      await this.rtmpClient.connectToRiot();
+      await this.rtmpClient.login();
+      await this.rtmpClient.login2();
+      return this.rtmpClient;
     } catch (error) {
       console.error("Failed to connect or handshake:", error);
     }
   }
 
-  async startGame(virtualClient: VirtualClient, rtmpClient: RtmpClient) {
-    await virtualClient.unregisterLobby();
-    await virtualClient.createLobby();
-    await virtualClient.selectGamemode(Gamemode.SOLO_DUO);
-    await virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
-    await virtualClient.startFindingMatch();
-
-    let matchFound = false;
-    const acceptInterval = setInterval(async () => {
-      matchFound = await virtualClient.acceptMatch([
-        SummonerSpell.FLASH,
-        SummonerSpell.IGNITE,
-      ]);
-      if (!matchFound) return;
-      clearInterval(acceptInterval);
-      Logger.white("Adding delay to allow the game to start... (45s) \n");
-      await setTimeout(45000);
-      await this.selectChampionsLoop(
-        rtmpClient,
-        virtualClient.getPlayerChampions()
-      );
-    }, 2000);
-  }
-
-  async selectChampionsLoop(rtmpClient: RtmpClient, champions: Champion[]) {
-    const championInterval = setInterval(async () => {
-      if (rtmpClient.pickState.isChampPicked) {
-        clearInterval(championInterval);
-        console.log(rtmpClient.pickState);
-      }
-      await rtmpClient.selectChampion(champions);
-    }, 2000);
+  async startGame() {
+    await this.virtualClient.createLobby();
+    await this.virtualClient.selectGamemode(Gamemode.DRAFT_PICK);
+    await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
+    await this.virtualClient.startFindingMatch();
+    await this.virtualClient.acceptMatchLoop([
+      SummonerSpell.FLASH,
+      SummonerSpell.IGNITE,
+    ]);
+    this.rtmpClient.banChampionsLoop(Champion.ZOE);
+    this.rtmpClient.selectChampionsLoop(
+      this.virtualClient.getPlayerChampions()
+    );
   }
 }
 
 const main = new Main();
 main.start();
+
+process.on("SIGINT", async () => {
+  Logger.red("Exiting... \n");
+  await main.stop();
+  process.exit(0);
+});
+process.on("SIGTERM", async () => {
+  Logger.red("Exiting... \n");
+  await main.stop();
+  process.exit(0);
+});

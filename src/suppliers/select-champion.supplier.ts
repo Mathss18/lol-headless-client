@@ -31,7 +31,7 @@ export class SelectChampionSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-loadouts)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-loadouts)`,
     };
 
     return headers;

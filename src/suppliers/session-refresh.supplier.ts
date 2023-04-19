@@ -25,7 +25,7 @@ export class SessionRefreshSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-login)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`,
     };
 
     return headers;

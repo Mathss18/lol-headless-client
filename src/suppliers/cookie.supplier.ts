@@ -3,6 +3,7 @@ import { VersionSupplier } from "../helpers/version.helper";
 import { v4 as uuidv4 } from "uuid";
 import base64url from "base64url";
 import { AxiosResponse } from "axios";
+import { Logger } from "../utils/logger.util";
 
 export class CookieSupplier {
   readonly URL = "https://auth.riotgames.com/api/v1/authorization";
@@ -89,7 +90,7 @@ export class CookieSupplier {
   public getCfbm(arr: string[]): string {
     const cfBmElement = arr.find((str) => str.startsWith("__cf_bm"));
     if (!cfBmElement) {
-      console.debug("[CFBM COOKIE] Not found");
+      Logger.red("[CFBM COOKIE] Not found");
       return "";
     }
     const cfBmString = cfBmElement.slice(

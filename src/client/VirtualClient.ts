@@ -24,6 +24,8 @@ import { UnregisterSupplier } from "../suppliers/unregister.supplier";
 import { PartyUserTokenSupplier } from "../suppliers/party-user-token.supplier";
 import { Champion } from "../enums/champion.enum";
 import { SummonerSpell } from "../enums/summoner-spell.enum";
+import { setTimeout as sleep } from "timers/promises";
+import { startSpinner, stopSpinner } from "../utils/spinner.util";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -84,7 +86,8 @@ export class VirtualClient {
         this._sessionToken = await this.getRefreshSession();
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
-      console.log(error);
+      Logger.red("Error while logging in! \n");
+      process.exit(1);
     }
     Logger.green("Logged in! \n");
   }
@@ -133,7 +136,7 @@ export class VirtualClient {
     Logger.green("Lobby created! \n");
   }
 
-  public async selectGamemode(gamemode: Gamemode = Gamemode.SOLO_DUO) {
+  public async selectGamemode(gamemode: Gamemode = Gamemode.RANKED_SOLO_DUO) {
     Logger.green("Selecting gamemode... \n");
     const gamemodeSupplier = new GamemodeSupplier(
       this._apiRequest,
@@ -175,7 +178,20 @@ export class VirtualClient {
     Logger.green("Finding match! \n");
   }
 
-  public async acceptMatch(summonerSpells: SummonerSpell[]): Promise<boolean> {
+  public async acceptMatchLoop(
+    summonerSpells: SummonerSpell[]
+  ): Promise<boolean> {
+    const spin = startSpinner("Searching for a match...");
+    let accepted = false;
+    while (!accepted) {
+      accepted = await this.acceptMatch(summonerSpells);
+      await sleep(2000);
+    }
+    stopSpinner(spin);
+    return accepted;
+  }
+
+  private async acceptMatch(summonerSpells: SummonerSpell[]): Promise<boolean> {
     const startMatchSupplier = new AcceptMatchSupplier(
       this._apiRequest,
       this._sessionToken,
@@ -190,21 +206,8 @@ export class VirtualClient {
       Logger.magenta("Match accepted! \n");
       return true;
     } else {
-      Logger.green("Trying to accept match... \n");
       return false;
     }
-  }
-
-  public async selectChampion() {
-    const selectChampionSupplier = new SelectChampionSupplier(
-      this._apiRequest,
-      this._sessionToken,
-      this._userData.sub,
-      22
-    );
-
-    const { data } = await selectChampionSupplier.makeRequest({});
-    console.log(data);
   }
 
   private async getTokens(cookieType: "CLIENT" | "LOL") {

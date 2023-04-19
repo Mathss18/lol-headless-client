@@ -28,7 +28,7 @@ export class PartyUserTokenSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-summoner)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-summoner)`,
     };
 
     return headers;

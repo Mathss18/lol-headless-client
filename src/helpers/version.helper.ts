@@ -5,10 +5,10 @@ export class VersionSupplier {
     public static get versionDll(): string {
         return "22.9.29.4789131";
     }
-    public static get versionQueue(): string {
-        return "13.7.501.1316";
+    public static get clientVersion(): string {
+        return "13.8.504.1242";
     }
     public static get gameVersion(): string {
-        return "13.7.5031019+branch.releases-13-7.code.public.content.release";
+        return "13.8.5041242+branch.releases-13-8.code.public.content.release";
     }
 }

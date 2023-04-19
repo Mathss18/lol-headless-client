@@ -10,6 +10,7 @@ import { UserData } from "../../suppliers/user-data.supplier";
 import { AMFEncoder } from "./amf/amf-encoder";
 import { Logger } from "../../utils/logger.util";
 import { Champion, ChampionName } from "../../enums/champion.enum";
+import { setTimeout as sleep } from "timers/promises";
 
 export class RtmpClient {
   private socket!: tls.TLSSocket;
@@ -23,9 +24,12 @@ export class RtmpClient {
     pickActionId: null,
     banActionId: null,
     isChampPicked: false,
+    isChampBanned: false,
     pickedChampion: null,
+    bannedChampion: null,
     isMyTurnToPick: false,
     isMyTurnToBan: false,
+    gameStarted: false,
   };
 
   private invokeID = 2;
@@ -243,11 +247,37 @@ export class RtmpClient {
     }
   }
 
+  async banChampionsLoop(champion: Champion): Promise<boolean> {
+    while (!this.pickState.isChampBanned) {
+      await this.banChampion(champion);
+      await sleep(2000);
+    }
+    return true;
+  }
+
+  public async banChampion(championId: Champion): Promise<void> {
+    if (this.pickState.isChampBanned || !this.pickState.isMyTurnToBan) return;
+    Logger.red(`Trying to ban champion ${ChampionName[championId]}`);
+    await this.championAction(championId);
+  }
+
+  async selectChampionsLoop(champions: Champion[]): Promise<boolean> {
+    while (!this.pickState.isChampPicked) {
+      await this.selectChampion(champions);
+      await sleep(2000);
+    }
+    return true;
+  }
+
   public async selectChampion(championIds: Champion[]): Promise<void> {
     if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick) return;
     const selectedChampion =
       championIds[Math.floor(Math.random() * championIds.length)];
     Logger.green(`Trying to select champion ${ChampionName[selectedChampion]}`);
+    await this.championAction(selectedChampion);
+  }
+
+  private async championAction(selectedChampion: Champion): Promise<void> {
     await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),

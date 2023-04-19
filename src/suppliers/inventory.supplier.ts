@@ -29,7 +29,7 @@ export class InventorySupplier {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-inventory)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-inventory)`,
     };
 
     return headers;

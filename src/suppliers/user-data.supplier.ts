@@ -46,7 +46,7 @@ export class UserDataSupplier {
   public get headers() {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.versionQueue} (rcp-be-lol-summoner)`,
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-summoner)`,
     };
 
     return headers;
