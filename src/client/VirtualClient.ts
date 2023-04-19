@@ -20,6 +20,10 @@ import { AcceptMatchSupplier } from "../suppliers/accept-match.supplier";
 import { SelectChampionSupplier } from "../suppliers/select-champion.supplier";
 import { SiptSupplier } from "../suppliers/sipt.supplier";
 import { InventorySupplier } from "../suppliers/inventory.supplier";
+import { UnregisterSupplier } from "../suppliers/unregister.supplier";
+import { PartyUserTokenSupplier } from "../suppliers/party-user-token.supplier";
+import { Champion } from "../enums/champion.enum";
+import { SummonerSpell } from "../enums/summoner-spell.enum";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -35,6 +39,8 @@ export class VirtualClient {
   private _userData: UserData;
   private _partyId: string;
   private _inventoryToken: string;
+  private _playerChampions: Champion[];
+  private _partyUserToken: string;
 
   constructor() {
     this._apiRequest = new ApiRequest();
@@ -68,7 +74,9 @@ export class VirtualClient {
 
       this._userData = await this.getUserData();
 
-      this._inventoryToken = await this.getInventory();
+      [this._inventoryToken, this._playerChampions] = await this.getInventory();
+
+      this._partyUserToken = await this.getPartyUserToken();
 
       this._siptToken = await this.getSipt();
 
@@ -81,6 +89,32 @@ export class VirtualClient {
     Logger.green("Logged in! \n");
   }
 
+  public getPlayerChampions(): Champion[] {
+    return this._playerChampions;
+  }
+
+  public async getPartyUserToken() {
+    const partyUserTokenSupplier = new PartyUserTokenSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._userData.sub
+    );
+    const { data } = await partyUserTokenSupplier.makeRequest({});
+    Logger.cyan(`[Party User Token]: ${data} \n`);
+    return data;
+  }
+
+  public async unregisterLobby() {
+    Logger.green("Unregitering lobby... \n");
+    const unregisterSupplier = new UnregisterSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._userData.sub
+    );
+    await unregisterSupplier.makeRequest({});
+    Logger.green("Lobby Unregistered \n");
+  }
+
   public async createLobby() {
     Logger.green("Creating lobby... \n");
     const partySupplier = new PartySupplier(
@@ -88,7 +122,9 @@ export class VirtualClient {
       this._sessionToken,
       this._userData.sub,
       this._userData.accountId,
-      this._userData.id
+      this._userData.id,
+      this._inventoryToken,
+      this._partyUserToken
     );
 
     const { data } = await partySupplier.makeRequest({});
@@ -139,13 +175,14 @@ export class VirtualClient {
     Logger.green("Finding match! \n");
   }
 
-  public async acceptMatch(): Promise<boolean> {
+  public async acceptMatch(summonerSpells: SummonerSpell[]): Promise<boolean> {
     const startMatchSupplier = new AcceptMatchSupplier(
       this._apiRequest,
       this._sessionToken,
       this._userData.accountId,
       this._userData.id,
-      this._inventoryToken
+      this._inventoryToken,
+      summonerSpells
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
@@ -206,7 +243,7 @@ export class VirtualClient {
     return data;
   }
 
-  private async getInventory(): Promise<string> {
+  private async getInventory(): Promise<[string, Champion[]]> {
     const inventorySupplier = new InventorySupplier(
       this._apiRequest,
       this._sessionToken,
@@ -215,7 +252,7 @@ export class VirtualClient {
     );
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} \n`);
-    return data.data.itemsJwt;
+    return [data.data.itemsJwt, data.data.items.CHAMPION];
   }
 
   private async getEntitlements() {
@@ -275,7 +312,8 @@ export class VirtualClient {
       new RiotClientUser(this._riotToken).getSub()
     );
     const data = await userDataSupplier.makeRequest({});
-    Logger.cyan(`[User Data]: ${data} \n`);
+    Logger.cyan(`[User Data]:\n`);
+    console.log(data);
     return data;
   }
 

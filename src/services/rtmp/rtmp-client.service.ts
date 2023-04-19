@@ -9,6 +9,7 @@ import { PublicTokens } from "../../client/VirtualClient";
 import { UserData } from "../../suppliers/user-data.supplier";
 import { AMFEncoder } from "./amf/amf-encoder";
 import { Logger } from "../../utils/logger.util";
+import { Champion, ChampionName } from "../../enums/champion.enum";
 
 export class RtmpClient {
   private socket!: tls.TLSSocket;
@@ -18,6 +19,14 @@ export class RtmpClient {
   public DSId: string | null;
   private token: string;
   private accountId: number;
+  public pickState = {
+    pickActionId: null,
+    banActionId: null,
+    isChampPicked: false,
+    pickedChampion: null,
+    isMyTurnToPick: false,
+    isMyTurnToBan: false,
+  };
 
   private invokeID = 2;
   private messageCounter = 0;
@@ -234,17 +243,18 @@ export class RtmpClient {
     }
   }
 
-  public async selectChampion(pos: number, championId: number[]): Promise<void> {
-    // choose a random champion
-    const selectedChampion = championId[Math.floor(Math.random() * championId.length)];
-    Logger.green(`Trying to select champion ${selectedChampion} at pos ${pos}`);
-    const id = await this.invoke(
+  public async selectChampion(championIds: Champion[]): Promise<void> {
+    if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick) return;
+    const selectedChampion =
+      championIds[Math.floor(Math.random() * championIds.length)];
+    Logger.green(`Trying to select champion ${ChampionName[selectedChampion]}`);
+    await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),
         "teambuilder-draft",
         "updateActionV1",
         JSON.stringify({
-          actionId: pos,
+          actionId: this.pickState.pickActionId ?? 0, // If position ID was found, use it
           championId: selectedChampion,
           completed: true,
         }),
@@ -254,7 +264,7 @@ export class RtmpClient {
 
   public async selectChampionCustom(): Promise<void> {
     Logger.green(`Trying to select champion`);
-    const id = await this.invoke(
+    await this.invoke(
       this.wrap("gameService", "selectChampionV2", [22, 22022])
     );
   }

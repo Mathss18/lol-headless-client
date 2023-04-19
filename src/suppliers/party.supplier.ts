@@ -10,7 +10,9 @@ export class PartySupplier {
     private jwt: string,
     private puuid: string,
     private accountId: number,
-    private id: number
+    private id: number,
+    private inventoryToken: string,
+    private partyUserToken: string
   ) {
     this.apiRequest = apiRequest;
   }
@@ -48,6 +50,13 @@ export class PartySupplier {
       registration: {
         gameClientVersion: VersionSupplier.gameVersion,
         inventoryToken: null,
+        inventoryTokens: [""],
+        playerTokens: {
+          idToken: "",
+        },
+        rankedOverviewToken: "",
+        simpleInventoryToken: this.inventoryToken,
+        summonerToken: this.partyUserToken,
       },
       serverUtcMillis: 0,
       summonerId: this.id,

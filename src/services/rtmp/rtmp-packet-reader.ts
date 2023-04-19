@@ -1,8 +1,10 @@
+import { ChampionName } from "../../enums/champion.enum";
 import { Logger } from "../../utils/logger.util";
 import { AMFDecoder } from "./amf/amf-decoder";
 import { RtmpClient } from "./rtmp-client.service";
 import { RtmpPacket } from "./rtmp-packet";
 import TypedObject from "./typed-object";
+import { gunzipSync } from "zlib";
 
 export class RtmpPacketReader {
   public packets: Map<string, TypedObject> = new Map();
@@ -114,19 +116,106 @@ export class RtmpPacketReader {
       default:
         console.warn(`Unhandled RTMP message type: ${messageType}`);
     }
-    if (result) {
-      Logger.cyan("[rtmp] Received packet: \n");
-      console.log(result.getTypedObject("data"));
+    if (!result) return;
+    console.log(result.getTypedObject("data"));
 
-      if (result.getTypedObject("data").getString("id")) {
-        this.client.DSId = result.getTypedObject("data").getString("id");
-        Logger.green(`DSiD: ${this.client.DSId}\n`);
-      } else {
-        if (this.tag) {
-          this.packets.set(this.tag, result);
-          this.tag = null;
+    // packet actions
+    this.setDsid(result);
+    this.setTagFromResult(result);
+    this.setPickActionIdAndCheckIfAlreadyPickedChampion(result);
+  }
+
+  private setDsid(result: TypedObject) {
+    if (this.client.DSId) return;
+    if (result.getTypedObject("data").getString("id")) {
+      this.client.DSId = result.getTypedObject("data").getString("id");
+      Logger.green(`DSiD: ${this.client.DSId}\n`);
+    }
+  }
+
+  private setTagFromResult(result: TypedObject): void {
+    if (this.tag) {
+      this.packets.set(this.tag, result);
+      this.tag = null;
+    }
+  }
+
+  private setPickActionIdAndCheckIfAlreadyPickedChampion(
+    result: TypedObject
+  ): void {
+    const body = result.getTypedObject("data")?.getTypedObject("body");
+    const isMethodName = body?.getString("methodName") === "tbdGameDtoV1";
+    const isServiceName =
+      body?.getString("serviceName") === "teambuilder-draft";
+
+    if (!isMethodName || !isServiceName) return;
+    if (this.client.pickState.isChampPicked) return;
+
+    const compresed = body.getString("payload");
+    const state = this.decodeGzipBase64(compresed).championSelectState;
+
+    const actionSetList: Array<any> = state.actionSetList;
+    const playerCellId: number = state.localPlayerCellId;
+    const currentActionIndex: number = state.currentActionSetIndex;
+
+    this.client.pickState.isMyTurnToPick = this.isMyTurnToPickOrBan(
+      actionSetList,
+      playerCellId,
+      currentActionIndex,
+      "PICK"
+    );
+
+    this.client.pickState.isMyTurnToBan = this.isMyTurnToPickOrBan(
+      actionSetList,
+      playerCellId,
+      currentActionIndex,
+      "BAN"
+    );
+
+    this.myPickPhaseActions(actionSetList, playerCellId);
+  }
+
+  private decodeGzipBase64(input: string): any {
+    const buffer = Buffer.from(input, "base64");
+    const decompressed = gunzipSync(buffer);
+    return JSON.parse(decompressed.toString());
+  }
+
+  private myPickPhaseActions(actionSetList: any[], myCellId: number): void {
+    if (this.client.pickState.isChampPicked) return; // if already picked champion, return
+    for (const group of actionSetList) {
+      for (const item of group) {
+        if (item.actorCellId === myCellId && item.type === "PICK") {
+          this.client.pickState.pickActionId = item.actionId;
+          Logger.green(
+            `Pick actionID ${this.client.pickState.pickActionId} \n`
+          );
+          if (item.completed === true) {
+            this.client.pickState.isChampPicked = true;
+            this.client.pickState.pickedChampion = item.championId;
+            Logger.green(`Picked champion: ${ChampionName[item.championId]}\n`);
+          }
         }
       }
     }
+  }
+
+  private isMyTurnToPickOrBan(
+    state: any[],
+    actorCellId: number,
+    actionSetIndex: number,
+    type: "PICK" | "BAN"
+  ): boolean {
+    if (actionSetIndex === -1) return false; // if actionSetIndex is -1, it means that the game has not started yet (in planning phase)
+    const currentActionSet = state[actionSetIndex];
+
+    for (const action of currentActionSet) {
+      if (action.actorCellId === actorCellId && action.type === type) {
+        Logger.green(`Is my turn to pick \n`);
+        return true;
+      }
+    }
+
+    return false;
   }
 }
