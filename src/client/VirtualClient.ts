@@ -179,7 +179,7 @@ export class VirtualClient {
     const { data } = await startMatchSupplier.makeRequest({});
     const activeRestrictions =
       data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
-    if (activeRestrictions.length > 0) {
+    if (activeRestrictions?.length > 0) {
       const reason = activeRestrictions[0].reason;
       const remainingMillis = activeRestrictions[0].remainingMillis;
       Logger.red("You are restricted from matchmaking! \n");

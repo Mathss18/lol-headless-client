@@ -1,5 +1,4 @@
 import { AMF0Type } from "./amf0-type";
-import * as ieee754 from "ieee754";
 import { Temporal } from "@js-temporal/polyfill";
 import { AMF3Type } from "./amf3-type";
 import TypedObject from "../typed-object";
