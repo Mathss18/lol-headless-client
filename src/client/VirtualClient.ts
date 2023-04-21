@@ -26,6 +26,8 @@ import { Champion } from "../enums/champion.enum";
 import { SummonerSpell } from "../enums/summoner-spell.enum";
 import { setTimeout as sleep } from "timers/promises";
 import { startSpinner, stopSpinner } from "../utils/spinner.util";
+import { progressBar } from "../utils/progress-bar.util";
+import { millisecondsToMinutes } from "../utils/utils";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -175,6 +177,17 @@ export class VirtualClient {
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
+    const activeRestrictions =
+      data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
+    if (activeRestrictions.length > 0) {
+      const reason = activeRestrictions[0].reason;
+      const remainingMillis = activeRestrictions[0].remainingMillis;
+      Logger.red("You are restricted from matchmaking! \n");
+      Logger.red(`Reason: ${reason} \n`);
+      Logger.red(`Time: ${millisecondsToMinutes(remainingMillis)}`);
+
+      await progressBar(0, true, remainingMillis);
+    }
     Logger.green("Finding match! \n");
   }
 

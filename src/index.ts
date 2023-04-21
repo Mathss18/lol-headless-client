@@ -57,7 +57,7 @@ class Main {
 
   async startGame() {
     await this.virtualClient.createLobby();
-    await this.virtualClient.selectGamemode(Gamemode.DRAFT_PICK);
+    await this.virtualClient.selectGamemode(Gamemode.RANKED_SOLO_DUO);
     await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop([
