@@ -112,5 +112,4 @@ const regions = {
   },
 };
 
-console.log(process.env.REGION)
 export const REGION: Region = regions[process.env.REGION || "BR"];
