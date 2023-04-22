@@ -19,8 +19,7 @@ export interface UserData {
   iat: number;
 }
 export class UserDataSupplier {
-  readonly URL =
-    `${REGION.leagueEdgeUrl}/summoner-ledge/v1/regions/${REGION.regionUpper}/summoners/puuid`;
+  readonly URL = `${REGION.leagueEdgeUrl}/summoner-ledge/v1/regions/${REGION.regionUpper}/summoners/puuid`;
 
   constructor(
     private apiRequest: ApiRequest,
@@ -31,6 +30,7 @@ export class UserDataSupplier {
   }
 
   public async makeRequest({ method = "GET" }): Promise<UserData> {
+    console.log(this.URL);
     const response = await this.apiRequest.request({
       url: `${this.URL}/${this.puuid}/jwt`,
       method: method,

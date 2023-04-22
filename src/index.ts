@@ -1,15 +1,14 @@
+import * as dotenv from "dotenv";
+dotenv.config();
 import { VirtualClient } from "./client/VirtualClient";
 import { Gamemode } from "./enums/gamemode.enum";
 import { Role } from "./enums/role.enum";
 import { RtmpClient } from "./services/rtmp/rtmp-client.service";
 import { Logger } from "./utils/logger.util";
 import { SummonerSpell } from "./enums/summoner-spell.enum";
-import * as dotenv from "dotenv";
 import { Champion } from "./enums/champion.enum";
 import { pass, user } from "./args";
 import { REGION } from "./config/regions";
-
-dotenv.config();
 
 class Main {
   private virtualClient: VirtualClient;

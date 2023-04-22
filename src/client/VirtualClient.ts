@@ -28,6 +28,7 @@ import { setTimeout as sleep } from "timers/promises";
 import { startSpinner, stopSpinner } from "../utils/spinner.util";
 import { progressBar } from "../utils/progress-bar.util";
 import { millisecondsToMinutes } from "../utils/utils";
+import { exit } from "process";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -74,9 +75,10 @@ export class VirtualClient {
         (this._queueToken = await this.getQueue()),
         (this._sessionToken = await this.getSession());
 
-      const dataGeopas = await this.getGeopas();
+      // const dataGeopas = await this.getGeopas();
 
       this._userData = await this.getUserData();
+      exit(0);
 
       [this._inventoryToken, this._playerChampions] = await this.getInventory();
 
