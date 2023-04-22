@@ -1,10 +1,10 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class SessionSupplier {
-  readonly URL =
-    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/create";
+  readonly URL = `${REGION.playerPlatformEdgeUrl}/session-external/v1/session/create`;
 
   constructor(
     private apiRequest: ApiRequest,
@@ -40,7 +40,7 @@ export class SessionSupplier {
       product: "lol",
       claims: { cname: "lcu" },
       puuid: this.puuid,
-      region: "br1",
+      region: REGION.regionLower,
     };
 
     return body;

@@ -1,5 +1,6 @@
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export interface UserData {
   sub: string;
@@ -19,7 +20,7 @@ export interface UserData {
 }
 export class UserDataSupplier {
   readonly URL =
-    "https://br-red.lol.sgp.pvp.net/summoner-ledge/v1/regions/BR1/summoners/puuid";
+    `${REGION.leagueEdgeUrl}/summoner-ledge/v1/regions/${REGION.regionUpper}/summoners/puuid`;
 
   constructor(
     private apiRequest: ApiRequest,

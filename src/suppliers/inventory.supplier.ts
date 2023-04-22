@@ -1,10 +1,11 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class InventorySupplier {
   readonly URL =
-    "https://br-red.lol.sgp.pvp.net/lolinventoryservice-ledge/v1/inventories/simple?inventoryTypes=CHAMPION&inventoryTypes=CHAMPION_SKIN";
+    `${REGION.leagueEdgeUrl}/lolinventoryservice-ledge/v1/inventories/simple?inventoryTypes=CHAMPION&inventoryTypes=CHAMPION_SKIN`;
 
   constructor(
     private apiRequest: ApiRequest,
@@ -38,7 +39,7 @@ export class InventorySupplier {
   public get params() {
     const params = {
       puuid: `${this.puuid}`,
-      location: "lolriot.aws-usw2-prod.br1",
+      location: REGION.discoverousServiceLocation,
       accountId: `${this.accountId}`,
       // inventoryTypes: ["CHAMPION", "CHAMPION_SKIN"],
       // includef2p: "true",

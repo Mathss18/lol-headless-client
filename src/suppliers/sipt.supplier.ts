@@ -1,10 +1,11 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class SiptSupplier {
   readonly URL =
-    "https://br-red.lol.sgp.pvp.net/sipt/v1/sipt/token";
+    `${REGION.leagueEdgeUrl}/sipt/v1/sipt/token`;
 
   constructor(private apiRequest: ApiRequest, private jwt: string) {
     this.apiRequest = apiRequest;

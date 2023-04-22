@@ -1,9 +1,10 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class PartySupplier {
-  readonly URL = "https://br-red.lol.sgp.pvp.net/parties-ledge/v1/players";
+  readonly URL = `${REGION.leagueEdgeUrl}/parties-ledge/v1/players`;
 
   constructor(
     private apiRequest: ApiRequest,
@@ -45,7 +46,7 @@ export class PartySupplier {
       currentParty: null,
       eligibilityHash: 0,
       parties: null,
-      platformId: "BR1",
+      platformId: REGION.regionUpper,
       puuid: this.puuid,
       registration: {
         gameClientVersion: VersionSupplier.gameVersion,

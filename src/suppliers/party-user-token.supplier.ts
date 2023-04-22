@@ -1,9 +1,10 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class PartyUserTokenSupplier {
-  readonly URL = "https://br-red.lol.sgp.pvp.net/summoner-ledge/v1/regions/BR1/summoners/puuid";
+  readonly URL = `${REGION.leagueEdgeUrl}/summoner-ledge/v1/regions/${REGION.regionLower}/summoners/puuid`;
 
   constructor(
     private apiRequest: ApiRequest,

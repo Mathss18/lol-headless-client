@@ -1,10 +1,11 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class SelectChampionSupplier {
   readonly URL =
-    "https://br-red.lol.sgp.pvp.net/loadouts/v4/loadouts/scope/CHAMPION/get";
+    `${REGION.leagueEdgeUrl}/loadouts/v4/loadouts/scope/CHAMPION/get`;
 
   constructor(
     private apiRequest: ApiRequest,

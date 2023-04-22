@@ -7,6 +7,7 @@ import { SummonerSpell } from "./enums/summoner-spell.enum";
 import * as dotenv from "dotenv";
 import { Champion } from "./enums/champion.enum";
 import { pass, user } from "./args";
+import { REGION } from "./config/regions";
 
 dotenv.config();
 
@@ -35,12 +36,15 @@ class Main {
   }
 
   async setupRtmp(virtualClient: VirtualClient): Promise<RtmpClient> {
-    const host = "feapp.br1.lol.pvp.net";
-    const port = 2099;
     const tokens = virtualClient.getAllTokens();
     const userData = virtualClient.userData();
 
-    this.rtmpClient = new RtmpClient(host, port, tokens, userData);
+    this.rtmpClient = new RtmpClient(
+      REGION.rtmpHost,
+      REGION.rtmpPort,
+      tokens,
+      userData
+    );
 
     try {
       await this.rtmpClient.connect();
@@ -57,7 +61,7 @@ class Main {
 
   async startGame() {
     await this.virtualClient.createLobby();
-    await this.virtualClient.selectGamemode(Gamemode.RANKED_SOLO_DUO);
+    await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
     await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop([

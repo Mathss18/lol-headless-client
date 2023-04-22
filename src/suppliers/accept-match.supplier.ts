@@ -2,10 +2,11 @@ import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
 import { SummonerSpell } from "../enums/summoner-spell.enum";
+import { REGION } from "../config/regions";
 
 export class AcceptMatchSupplier {
   readonly URL =
-    "https://br-red.lol.sgp.pvp.net/team-builder-ledge/v2/indicateAfkReadiness";
+    `${REGION.leagueEdgeUrl}/team-builder-ledge/v2/indicateAfkReadiness`;
 
   constructor(
     private apiRequest: ApiRequest,

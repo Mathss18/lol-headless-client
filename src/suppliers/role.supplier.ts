@@ -2,9 +2,10 @@ import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
 import { Role } from "src/enums/role.enum";
+import { REGION } from "../config/regions";
 
 export class RoleSupplier {
-  readonly URL = "https://br-red.lol.sgp.pvp.net/parties-ledge/v1/parties";
+  readonly URL = `${REGION.leagueEdgeUrl}/parties-ledge/v1/parties`;
 
   constructor(
     private apiRequest: ApiRequest,

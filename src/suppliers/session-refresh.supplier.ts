@@ -1,10 +1,11 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class SessionRefreshSupplier {
   readonly URL =
-    "https://usw2-green.pp.sgp.pvp.net/session-external/v1/session/refresh";
+    `${REGION.playerPlatformEdgeUrl}/session-external/v1/session/refresh`;
 
   constructor(private apiRequest: ApiRequest, private jwt: string) {
     this.apiRequest = apiRequest;

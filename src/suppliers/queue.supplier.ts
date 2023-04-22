@@ -1,9 +1,10 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
 import { VersionSupplier } from "../helpers/version.helper";
+import { REGION } from "../config/regions";
 
 export class QueueSupplier {
-  readonly URL = "https://usw2-green.pp.sgp.pvp.net/login-queue/v2/login/products/lol/regions/br1";
+  readonly URL = `${REGION.playerPlatformEdgeUrl}/login-queue/v2/login/products/lol/regions/${REGION.regionLower}`;
 
   constructor(
     private apiRequest: ApiRequest,

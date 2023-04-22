@@ -6,8 +6,7 @@ export class VersionSupplier {
         return "22.9.29.4789131";
     }
     public static get clientVersion(): string {
-        // return "13.8.503.9229"; // Current Version
-        return "13.8.504.1242";
+        return "13.8.505.1405"; // Current Version
     }
     public static get gameVersion(): string {
         // return "13.8.5041242+branch.releases-13-8.code.public.content.release"; // Current Version
