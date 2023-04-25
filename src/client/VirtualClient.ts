@@ -88,6 +88,7 @@ export class VirtualClient {
         this._sessionToken = await this.getRefreshSession();
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
+      console.log(error)
       Logger.red("Error while logging in! \n");
       process.exit(1);
     }
@@ -198,7 +199,7 @@ export class VirtualClient {
     let accepted = false;
     while (!accepted) {
       accepted = await this.acceptMatch(summonerSpells);
-      await sleep(2000);
+      await sleep(7500);
     }
     stopSpinner(spin);
     return accepted;

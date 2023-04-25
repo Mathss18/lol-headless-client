@@ -27,7 +27,7 @@ class Main {
   async stop() {
     await this.virtualClient.unregisterLobby();
   }
-
+  
   async setupVirtualClient(): Promise<VirtualClient> {
     this.virtualClient = new VirtualClient();
     await this.virtualClient.login(user, pass);
@@ -57,17 +57,18 @@ class Main {
       console.error("Failed to connect or handshake:", error);
     }
   }
-
+  
   async startGame() {
+    await this.virtualClient.unregisterLobby();
     await this.virtualClient.createLobby();
-    await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
+    await this.virtualClient.selectGamemode(Gamemode.DRAFT_PICK);
     await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop([
       SummonerSpell.FLASH,
       SummonerSpell.IGNITE,
     ]);
-    this.rtmpClient.banChampionsLoop(Champion.ZOE);
+    this.rtmpClient.banChampionsLoop(Champion.NONE);
     this.rtmpClient.selectChampionsLoop(
       this.virtualClient.getPlayerChampions()
     );

@@ -30,7 +30,6 @@ export class UserDataSupplier {
   }
 
   public async makeRequest({ method = "GET" }): Promise<UserData> {
-    console.log(this.URL);
     const response = await this.apiRequest.request({
       url: `${this.URL}/${this.puuid}/jwt`,
       method: method,

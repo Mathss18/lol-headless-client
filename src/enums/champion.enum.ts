@@ -1,4 +1,5 @@
 export enum Champion {
+  NONE = -1,
   ANNIE = 1,
   AHRI = 103,
   AKALI = 84,
@@ -163,6 +164,7 @@ export enum Champion {
 }
 
 export const ChampionName = {
+  [Champion.NONE]: "None",
   [Champion.ANNIE]: "Annie",
   [Champion.AHRI]: "Ahri",
   [Champion.AKALI]: "Akali",

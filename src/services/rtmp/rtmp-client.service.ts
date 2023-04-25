@@ -168,7 +168,7 @@ export class RtmpClient {
       await this.invoke(this.wrap("loginService", "login", typedObject));
       setTimeout(() => {
         resolve();
-      }, 2000);
+      }, 3000);
     });
   }
 
@@ -185,10 +185,6 @@ export class RtmpClient {
         .getTypedObject("accountSummary")
         .getLong("accountId");
 
-      setInterval(() => {
-        this.heartbeat();
-      }, interval);
-
       const channels: string[] = ["gn", "cn", "bc"];
 
       for (let i = 1; i >= 0; i--) {
@@ -197,14 +193,20 @@ export class RtmpClient {
         }
       }
 
-      const buffer: Buffer = Buffer.from(
-        `${user}:${this.token}`,
-        "utf-8"
-      );
+      await sleep(500);
+
+      const buffer: Buffer = Buffer.from(`${user.toLowerCase()}:${this.token}`, "utf-8");
       const base64Encoded: string = buffer.toString("base64");
       const auth: TypedObject = this.wrap("auth", 8, base64Encoded);
       auth.setType("flex.messaging.messages.CommandMessage");
       this.invoke(auth);
+
+      await sleep(500);
+
+      this.heartbeat();
+      setInterval(() => {
+        this.heartbeat();
+      }, interval);
 
       setTimeout(() => {
         resolve();
@@ -230,16 +232,25 @@ export class RtmpClient {
     body.set("headers", headers);
     body.set("clientId", client);
 
-    const id: number = await this.invoke(body);
+    await this.invoke(body);
   }
 
   private heartbeat(): void {
+    const now = new Date();
+    const formatedDate = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
+      now.getHours()
+    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+      now.getSeconds()
+    ).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
     const data: Object[] = [
       this.accountId,
       this.token,
-      this.heartbeatCounter++,
-      new Date().toISOString(),
+      ++this.heartbeatCounter,
+      formatedDate,
     ];
+    console.log(data);
 
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
@@ -278,7 +289,15 @@ export class RtmpClient {
     await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
 
-  private async championAction(selectedChampion: Champion, actionId: number): Promise<void> {
+  private async championAction(
+    selectedChampion: Champion,
+    actionId: number
+  ): Promise<void> {
+    console.log({
+      actionId: actionId,
+      championId: selectedChampion,
+      completed: true,
+    });
     await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),
