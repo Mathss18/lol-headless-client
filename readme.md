@@ -55,7 +55,7 @@ You can also run the project with command line args
 ### Supported Regions (change it in .env)
 **BR, EUW, EUNE, JP, LA1, LA2, NA, OC1, RU, TR**
 
-**PS: This BETA version, it does not have a GUI. I'll implement that in the future. For more info, contact me in discord: Mathss#9436**
+**PS: This BETA version, it does not have a GUI. I'll implement that in the future. For more info, contact me in discord: mathss7**
 
 ## Screenshots
 
