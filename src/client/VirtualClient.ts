@@ -84,11 +84,13 @@ export class VirtualClient {
 
       this._siptToken = await this.getSipt();
 
+      await sleep(1000);
+
       setInterval(async () => {
         this._sessionToken = await this.getRefreshSession();
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       Logger.red("Error while logging in! \n");
       process.exit(1);
     }
@@ -130,7 +132,8 @@ export class VirtualClient {
       this._userData.accountId,
       this._userData.id,
       this._inventoryToken,
-      this._partyUserToken
+      this._partyUserToken,
+      this._userInfoToken
     );
 
     const { data } = await partySupplier.makeRequest({});

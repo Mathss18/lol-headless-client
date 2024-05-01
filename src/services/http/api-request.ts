@@ -23,6 +23,7 @@ export class ApiRequest {
       ciphers: this.ciphers,
       maxVersion: "TLSv1.3",
       minVersion: "TLSv1.2",
+      keepAlive: true
     };
 
     this.agent = new https.Agent(agentOptions);
@@ -40,6 +41,7 @@ export class ApiRequest {
         method,
         url,
         headers: { ...headers, "User-Agent": this.userAgent },
+        timeout: 60000, //optional
         data: body,
         httpsAgent: this.agent,
         params,

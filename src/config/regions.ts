@@ -17,7 +17,7 @@ const regions = {
     rtmpHost: "feapp.br1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://br-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://usw2-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.br1",
   },
   EUW: {
@@ -27,7 +27,7 @@ const regions = {
     rtmpHost: "feapp.euw1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://euw-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://euc1-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-euc1-prod.euw1",
   },
   EUNE: {
@@ -37,7 +37,7 @@ const regions = {
     rtmpHost: "prod.eun1.lol.riotgames.com",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://eune-blue.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://euc1-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.euc1.eun1",
   },
   JP: {
@@ -47,7 +47,7 @@ const regions = {
     rtmpHost: "feapp.jp1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://jp-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://apne1-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://apne1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-apne1-prod.jp1",
   },
   LA1: {
@@ -57,7 +57,7 @@ const regions = {
     rtmpHost: "feapp.la1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://las-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://usw2-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.la1",
   },
   LA2: {
@@ -67,7 +67,7 @@ const regions = {
     rtmpHost: "feapp.la2.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://lan-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://usw2-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.la2",
   },
   NA: {
@@ -77,7 +77,7 @@ const regions = {
     rtmpHost: "feapp.na1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://na-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://usw2-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.na1",
   },
   OC1: {
@@ -87,7 +87,7 @@ const regions = {
     rtmpHost: "feapp.oc1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://oce-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://usw2-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-apse1-prod.oc1",
   },
   RU: {
@@ -97,7 +97,7 @@ const regions = {
     rtmpHost: "feapp.ru.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://ru-red.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://euc1-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-euc1-prod.ru",
   },
   TR: {
@@ -107,7 +107,7 @@ const regions = {
     rtmpHost: "prod.tr.lol.riotgames.com",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://tr-blue.lol.sgp.pvp.net",
-    playerPlatformEdgeUrl: "https://euc1-green.pp.sgp.pvp.net",
+    playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.euc1.tr1",
   },
 };

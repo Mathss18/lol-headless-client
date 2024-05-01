@@ -13,7 +13,8 @@ export class PartySupplier {
     private accountId: number,
     private id: number,
     private inventoryToken: string,
-    private partyUserToken: string
+    private partyUserToken: string,
+    private userInfoJwt: string
   ) {
     this.apiRequest = apiRequest;
   }
@@ -54,6 +55,7 @@ export class PartySupplier {
         inventoryTokens: [""],
         playerTokens: {
           idToken: "",
+          userInfoToken: this.userInfoJwt,
         },
         rankedOverviewToken: "",
         simpleInventoryToken: this.inventoryToken,
