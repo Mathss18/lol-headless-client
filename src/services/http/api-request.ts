@@ -23,7 +23,7 @@ export class ApiRequest {
       ciphers: this.ciphers,
       maxVersion: "TLSv1.3",
       minVersion: "TLSv1.2",
-      keepAlive: true
+      keepAlive: true,
     };
 
     this.agent = new https.Agent(agentOptions);
@@ -40,9 +40,11 @@ export class ApiRequest {
       const config: AxiosRequestConfig = {
         method,
         url,
-        headers: { ...headers, "User-Agent": this.userAgent },
-        timeout: 60000, //optional
+        headers: { "User-Agent": this.userAgent, ...headers },
+        timeout: 600000, //optional
         data: body,
+        proxy: false,
+        httpAgent: this.agent,
         httpsAgent: this.agent,
         params,
       };

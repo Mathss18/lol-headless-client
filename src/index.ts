@@ -21,6 +21,12 @@ class Main {
       await this.startGame();
     } catch (error) {
       console.dir(error);
+      console.dir(error?.response);
+      console.dir(error?.response?.data);
+      console.dir(error?.response?.data?.payload);
+      console.dir(error?.error);
+      console.dir(error?.data);
+      console.dir(error.data?.payload);
     }
   }
 
@@ -61,7 +67,7 @@ class Main {
   async startGame() {
     await this.virtualClient.unregisterLobby();
     await this.virtualClient.createLobby();
-    await this.virtualClient.selectGamemode(Gamemode.DRAFT_PICK);
+    await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
     await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop([

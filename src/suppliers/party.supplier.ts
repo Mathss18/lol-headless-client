@@ -55,14 +55,17 @@ export class PartySupplier {
         inventoryTokens: [""],
         playerTokens: {
           idToken: "",
+          summonerToken: this.partyUserToken,
           userInfoToken: this.userInfoJwt,
         },
         rankedOverviewToken: "",
         simpleInventoryToken: this.inventoryToken,
-        summonerToken: this.partyUserToken,
+        summonerToken: null,
       },
       serverUtcMillis: 0,
       summonerId: this.id,
+      tftGamesPlayed: 0,
+      tftGamesWon: 0,
       version: 0,
     };
     return body;
