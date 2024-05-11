@@ -37,6 +37,7 @@ export class VirtualClient {
   private _userInfoToken: string;
   private _siptToken: string;
   private _queueToken: string;
+  private _geoPassToken: string;
   private _entitlementsToken: string;
   private _username: string;
   private _password: string;
@@ -56,25 +57,23 @@ export class VirtualClient {
     this._password = password;
 
     try {
-      const riotClientParsedTokens = QueryTokenParser.parse(
-        await this.getTokens("CLIENT")
-      );
+      const riotClientParsedTokens = QueryTokenParser.parse(await this.getTokens("CLIENT"));
       this._riotToken = riotClientParsedTokens.access_token;
       Logger.cyan(`[Riot Token]: ${this._riotToken} \n`);
 
-      const lolParsedTokens = QueryTokenParser.parse(
-        await this.getTokens("LOL")
-      );
+      const lolParsedTokens = QueryTokenParser.parse(await this.getTokens("LOL"));
       this._lolToken = lolParsedTokens.access_token;
       Logger.cyan(`[LoL Token]: ${this._lolToken} \n`);
 
       this._userInfoToken = await this.getUserInfo();
 
-      (this._entitlementsToken = await this.getEntitlements()),
-        (this._queueToken = await this.getQueue()),
-        (this._sessionToken = await this.getSession());
+      this._entitlementsToken = await this.getEntitlements();
 
-      const dataGeopas = await this.getGeopas();
+      this._queueToken = await this.getQueue();
+
+      this._sessionToken = await this.getSession();
+
+      this._geoPassToken = await this.getGeopas();
 
       this._userData = await this.getUserData();
 
@@ -102,11 +101,7 @@ export class VirtualClient {
   }
 
   public async getPartyUserToken() {
-    const partyUserTokenSupplier = new PartyUserTokenSupplier(
-      this._apiRequest,
-      this._sessionToken,
-      this._userData.sub
-    );
+    const partyUserTokenSupplier = new PartyUserTokenSupplier(this._apiRequest, this._sessionToken, this._userData.sub);
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} \n`);
     return data;
@@ -114,11 +109,7 @@ export class VirtualClient {
 
   public async unregisterLobby() {
     Logger.green("Unregitering lobby... \n");
-    const unregisterSupplier = new UnregisterSupplier(
-      this._apiRequest,
-      this._sessionToken,
-      this._userData.sub
-    );
+    const unregisterSupplier = new UnregisterSupplier(this._apiRequest, this._sessionToken, this._userData.sub);
     await unregisterSupplier.makeRequest({});
     Logger.green("Lobby Unregistered \n");
   }
@@ -144,12 +135,7 @@ export class VirtualClient {
 
   public async selectGamemode(gamemode: Gamemode = Gamemode.RANKED_SOLO_DUO) {
     Logger.green("Selecting gamemode... \n");
-    const gamemodeSupplier = new GamemodeSupplier(
-      this._apiRequest,
-      this._sessionToken,
-      this._partyId,
-      gamemode
-    );
+    const gamemodeSupplier = new GamemodeSupplier(this._apiRequest, this._sessionToken, this._partyId, gamemode);
 
     const { data } = await gamemodeSupplier.makeRequest({});
     const playersCount = data.currentParty.players.length;
@@ -181,8 +167,7 @@ export class VirtualClient {
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
-    const activeRestrictions =
-      data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
+    const activeRestrictions = data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
     if (activeRestrictions?.length > 0) {
       const reason = activeRestrictions[0].reason;
       const remainingMillis = activeRestrictions[0].remainingMillis;
@@ -195,9 +180,7 @@ export class VirtualClient {
     Logger.green("Finding match! \n");
   }
 
-  public async acceptMatchLoop(
-    summonerSpells: SummonerSpell[]
-  ): Promise<boolean> {
+  public async acceptMatchLoop(summonerSpells: SummonerSpell[]): Promise<boolean> {
     const spin = startSpinner("Searching for a match...");
     let accepted = false;
     while (!accepted) {
@@ -254,10 +237,7 @@ export class VirtualClient {
   }
 
   private async getUserInfo(): Promise<string> {
-    const riotClientUserInfo = new UserInfoSupplier(
-      this._apiRequest,
-      this._lolToken
-    );
+    const riotClientUserInfo = new UserInfoSupplier(this._apiRequest, this._lolToken);
     const { data } = await riotClientUserInfo.makeRequest({});
     Logger.cyan(`[User Info Token]: ${data} \n`);
     return data;
@@ -276,10 +256,7 @@ export class VirtualClient {
   }
 
   private async getEntitlements() {
-    const lolClientEntitlements = new EntitlementSupplier(
-      this._apiRequest,
-      this._riotToken
-    );
+    const lolClientEntitlements = new EntitlementSupplier(this._apiRequest, this._riotToken);
     const { data } = await lolClientEntitlements.makeRequest({});
     Logger.cyan(`[Entitlements Token]: ${data.entitlements_token} \n`);
     return data.entitlements_token;
@@ -310,10 +287,7 @@ export class VirtualClient {
   }
 
   private async getGeopas() {
-    const geopassSupplier = new GeopasSupplier(
-      this._apiRequest,
-      this._lolToken
-    );
+    const geopassSupplier = new GeopasSupplier(this._apiRequest, this._lolToken);
     const { data } = await geopassSupplier.makeRequest({});
     return data;
   }
@@ -338,10 +312,7 @@ export class VirtualClient {
   }
 
   private async getRefreshSession() {
-    const sessionRefreshSupplier = new SessionRefreshSupplier(
-      this._apiRequest,
-      this._sessionToken
-    );
+    const sessionRefreshSupplier = new SessionRefreshSupplier(this._apiRequest, this._sessionToken);
     const { data } = await sessionRefreshSupplier.makeRequest({});
     Logger.magenta(`[(REFRESH) Session Token]: ${data} \n`);
     return data;
@@ -355,7 +326,7 @@ export class VirtualClient {
       userInfoToken: this._userInfoToken,
       queueToken: this._queueToken,
       sessionToken: this._sessionToken,
-      // geopasToken: this._geopasToken,
+      geopasToken: this._geoPassToken,
       siptToken: this._siptToken,
     };
   }
@@ -372,6 +343,6 @@ export interface PublicTokens {
   userInfoToken: string;
   queueToken: string;
   sessionToken: string;
-  // geopasToken: string;
+  geopasToken: string;
   siptToken: string;
 }

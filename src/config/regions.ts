@@ -7,6 +7,7 @@ interface Region {
   leagueEdgeUrl: string;
   playerPlatformEdgeUrl: string;
   discoverousServiceLocation: string;
+  xmppUrl: string;
 }
 
 const regions = {
@@ -19,6 +20,7 @@ const regions = {
     leagueEdgeUrl: "https://br-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.br1",
+    xmppUrl: "br.chat.si.riotgames.com",
   },
   EUW: {
     name: "Europe West",
@@ -29,6 +31,7 @@ const regions = {
     leagueEdgeUrl: "https://euw-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-euc1-prod.euw1",
+    xmppUrl: "euw1.chat.si.riotgames.com",
   },
   EUNE: {
     name: "Europe Nordic & East",
@@ -39,6 +42,7 @@ const regions = {
     leagueEdgeUrl: "https://eune-blue.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.euc1.eun1",
+    xmppUrl: "eun1.chat.si.riotgames.com",
   },
   JP: {
     name: "Japan",
@@ -49,6 +53,7 @@ const regions = {
     leagueEdgeUrl: "https://jp-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://apne1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-apne1-prod.jp1",
+    xmppUrl: "jp1.chat.si.riotgames.com",
   },
   LA1: {
     name: "Latin America North",
@@ -59,6 +64,7 @@ const regions = {
     leagueEdgeUrl: "https://las-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.la1",
+    xmppUrl: "la1.chat.si.riotgames.com",
   },
   LA2: {
     name: "Latin America South",
@@ -69,6 +75,7 @@ const regions = {
     leagueEdgeUrl: "https://lan-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.la2",
+    xmppUrl: "la1.chat.si.riotgames.com",
   },
   NA: {
     name: "North America",
@@ -79,6 +86,7 @@ const regions = {
     leagueEdgeUrl: "https://na-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-usw2-prod.na1",
+    xmppUrl: "na2.chat.si.riotgames.com",
   },
   OC1: {
     name: "Oceania",
@@ -89,6 +97,7 @@ const regions = {
     leagueEdgeUrl: "https://oce-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://usw2-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-apse1-prod.oc1",
+    xmppUrl: "oc1.chat.si.riotgames.com",
   },
   RU: {
     name: "Russia",
@@ -99,6 +108,7 @@ const regions = {
     leagueEdgeUrl: "https://ru-red.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.aws-euc1-prod.ru",
+    xmppUrl: "ru1.chat.si.riotgames.com",
   },
   TR: {
     name: "Turkey",
@@ -109,6 +119,7 @@ const regions = {
     leagueEdgeUrl: "https://tr-blue.lol.sgp.pvp.net",
     playerPlatformEdgeUrl: "https://euc1-red.pp.sgp.pvp.net",
     discoverousServiceLocation: "lolriot.euc1.tr1",
+    xmppUrl: "tr1.chat.si.riotgames.com",
   },
 };
 

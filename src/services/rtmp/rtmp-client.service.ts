@@ -38,12 +38,7 @@ export class RtmpClient {
   private heartbeatCounter = 0;
   private amfEncoder = new AMFEncoder();
 
-  constructor(
-    private host: string,
-    private port: number,
-    private tokens: PublicTokens,
-    private userData: UserData
-  ) {
+  constructor(private host: string, private port: number, private tokens: PublicTokens, private userData: UserData) {
     this.rtmpConnected = false;
     this.baseRtmpInfo = new RtmoInfoBuilder();
     this.baseRtmpInfo
@@ -129,9 +124,7 @@ export class RtmpClient {
         .setPageURL("")
         .build();
       try {
-        await this.write(
-          this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap())
-        );
+        await this.write(this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap()));
         setTimeout(() => {
           resolve();
         }, 2000);
@@ -144,9 +137,7 @@ export class RtmpClient {
   public async login(): Promise<void> {
     return new Promise(async (resolve, _) => {
       this.rtmpPacketReader.setTag("login");
-      const typedObject = new TypedObject(
-        "com.riotgames.platform.login.AuthenticationCredentials"
-      );
+      const typedObject = new TypedObject("com.riotgames.platform.login.AuthenticationCredentials");
       typedObject.set("macAddress", "000000000000");
       typedObject.set("authToken", "");
       typedObject.set("userInfoTokenJwe", this.tokens.userInfoToken);
@@ -175,15 +166,10 @@ export class RtmpClient {
   public async login2(): Promise<void> {
     const interval = 120000; // 2 min in milies
     return new Promise(async (resolve, _) => {
-      const body = this.rtmpPacketReader
-        .getPacketByTag("login")
-        .getTypedObject("data")
-        .getTypedObject("body");
+      const body = this.rtmpPacketReader.getPacketByTag("login").getTypedObject("data").getTypedObject("body");
 
       this.token = body.getString("token");
-      this.accountId = body
-        .getTypedObject("accountSummary")
-        .getLong("accountId");
+      this.accountId = body.getTypedObject("accountSummary").getLong("accountId");
 
       const channels: string[] = ["gn", "cn", "bc"];
 
@@ -215,17 +201,12 @@ export class RtmpClient {
   }
 
   private async subscribe(client: string, operation: number): Promise<void> {
-    const body: TypedObject = this.wrap("messagingDestination", operation, [
-      new TypedObject(),
-    ]);
+    const body: TypedObject = this.wrap("messagingDestination", operation, [new TypedObject()]);
     body.setType("flex.messaging.messages.CommandMessage");
 
     const headers: TypedObject = new TypedObject();
     headers.set("DSEndpoint", "my-rtmp");
-    headers.set(
-      "DSSubtopic",
-      !client.startsWith("b") ? client : client.split("-")[0]
-    );
+    headers.set("DSSubtopic", !client.startsWith("b") ? client : client.split("-")[0]);
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
 
@@ -237,19 +218,13 @@ export class RtmpClient {
 
   private heartbeat(): void {
     const now = new Date();
-    const formatedDate = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
-      now.getHours()
-    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
-      now.getSeconds()
-    ).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
-    const data: Object[] = [
-      this.accountId,
-      this.token,
-      ++this.heartbeatCounter,
-      formatedDate,
-    ];
+    const formatedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(
+      2,
+      "0"
+    )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
+    const data: Object[] = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
     console.log(data);
 
     try {
@@ -283,16 +258,12 @@ export class RtmpClient {
 
   public async selectChampion(championIds: Champion[]): Promise<void> {
     if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick) return;
-    const selectedChampion =
-      championIds[Math.floor(Math.random() * championIds.length)];
+    const selectedChampion = championIds[Math.floor(Math.random() * championIds.length)];
     Logger.green(`Trying to select champion ${ChampionName[selectedChampion]}`);
     await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
 
-  private async championAction(
-    selectedChampion: Champion,
-    actionId: number
-  ): Promise<void> {
+  private async championAction(selectedChampion: Champion, actionId: number): Promise<void> {
     console.log({
       actionId: actionId,
       championId: selectedChampion,
@@ -314,8 +285,23 @@ export class RtmpClient {
 
   public async selectChampionCustom(): Promise<void> {
     Logger.green(`Trying to select champion`);
+    await this.invoke(this.wrap("gameService", "selectChampionV2", [22, 22022]));
+  }
+
+  private async reportPlayer(gameId: number, offenderSummonerId: number): Promise<void> {
+    Logger.green(`Trying to report player`);
     await this.invoke(
-      this.wrap("gameService", "selectChampionV2", [22, 22022])
+      this.wrap("lcdsServiceProxy", "call", [
+        uuidv4(),
+        "report",
+        "reportPlayer",
+        JSON.stringify({
+          comments: "",
+          gameId,
+          offenderSummonerId,
+          offenses: "NEGATIVE_ATTITUDE,VERBAL_ABUSE,ASSISTING_ENEMY_TEAM",
+        }),
+      ])
     );
   }
 
@@ -359,27 +345,18 @@ export class RtmpClient {
     await this.write(data);
   }
 
-  private wrap(
-    destination: string,
-    operation: string | number,
-    body: any
-  ): TypedObject {
+  private wrap(destination: string, operation: string | number, body: any): TypedObject {
     const headers = new TypedObject();
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
     headers.set("DSEndpoint", "my-rtmp");
 
-    const typedObject = new TypedObject(
-      "flex.messaging.messages.RemotingMessage"
-    );
+    const typedObject = new TypedObject("flex.messaging.messages.RemotingMessage");
     typedObject.set("destination", destination);
     typedObject.set("operation", operation);
     typedObject.set("source", null);
     typedObject.set("timestamp", 0);
-    typedObject.set(
-      "messageId",
-      `${this.userData.accountId}-${this.messageCounter++}`
-    );
+    typedObject.set("messageId", `${this.userData.accountId}-${this.messageCounter++}`);
     typedObject.set("timeToLive", 0);
     typedObject.set("clientId", null);
     typedObject.set("headers", headers);

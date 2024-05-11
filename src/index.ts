@@ -9,16 +9,18 @@ import { SummonerSpell } from "./enums/summoner-spell.enum";
 import { Champion } from "./enums/champion.enum";
 import { pass, user } from "./args";
 import { REGION } from "./config/regions";
+import { XmppClient } from "./services/xmpp/xmpp.client.service";
 
 class Main {
   private virtualClient: VirtualClient;
   private rtmpClient: RtmpClient;
+  private xmppClient: XmppClient;
 
   async start() {
     try {
       this.virtualClient = await this.setupVirtualClient();
       this.rtmpClient = await this.setupRtmp(this.virtualClient);
-      await this.startGame();
+      this.xmppClient = await this.setupXmpp(this.virtualClient);
     } catch (error) {
       console.dir(error);
       console.dir(error?.response);
@@ -33,7 +35,7 @@ class Main {
   async stop() {
     await this.virtualClient.unregisterLobby();
   }
-  
+
   async setupVirtualClient(): Promise<VirtualClient> {
     this.virtualClient = new VirtualClient();
     await this.virtualClient.login(user, pass);
@@ -44,12 +46,7 @@ class Main {
     const tokens = virtualClient.getAllTokens();
     const userData = virtualClient.userData();
 
-    this.rtmpClient = new RtmpClient(
-      REGION.rtmpHost,
-      REGION.rtmpPort,
-      tokens,
-      userData
-    );
+    this.rtmpClient = new RtmpClient(REGION.rtmpHost, REGION.rtmpPort, tokens, userData);
 
     try {
       await this.rtmpClient.connect();
@@ -60,24 +57,31 @@ class Main {
       await this.rtmpClient.login2();
       return this.rtmpClient;
     } catch (error) {
-      console.error("Failed to connect or handshake:", error);
+      console.error("[RTMP] Failed to connect or handshake:", error);
     }
   }
-  
+
+  async setupXmpp(virtualClient: VirtualClient): Promise<XmppClient> {
+    const tokens = virtualClient.getAllTokens();
+    this.xmppClient = new XmppClient(tokens.lolToken, tokens.geopasToken);
+
+    try {
+      this.xmppClient.connect();
+      return this.xmppClient;
+    } catch (error) {
+      console.error("[XMPP] Failed to connect or handshake:", error);
+    }
+  }
+
   async startGame() {
     await this.virtualClient.unregisterLobby();
-    await this.virtualClient.createLobby();
-    await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
-    await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
-    await this.virtualClient.startFindingMatch();
-    await this.virtualClient.acceptMatchLoop([
-      SummonerSpell.FLASH,
-      SummonerSpell.IGNITE,
-    ]);
-    this.rtmpClient.banChampionsLoop(Champion.NONE);
-    this.rtmpClient.selectChampionsLoop(
-      this.virtualClient.getPlayerChampions()
-    );
+    // await this.virtualClient.createLobby();
+    // await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
+    // await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);
+    // await this.virtualClient.startFindingMatch();
+    // await this.virtualClient.acceptMatchLoop([SummonerSpell.FLASH, SummonerSpell.IGNITE]);
+    // this.rtmpClient.banChampionsLoop(Champion.NONE);
+    // this.rtmpClient.selectChampionsLoop(this.virtualClient.getPlayerChampions());
   }
 }
 
