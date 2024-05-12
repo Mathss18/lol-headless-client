@@ -63,7 +63,7 @@ export class RtmpClient {
 
         this.socket
           .on("secureConnect", () => {
-            Logger.green("TLS connected \n");
+            Logger.magenta("[RTMP] TLS connected \n");
             this.rtmpConnected = true;
             resolve();
           })
@@ -85,7 +85,7 @@ export class RtmpClient {
       const handshake = new Handshake();
       handshake.initialize(this.socket);
       handshake.once("done", () => {
-        Logger.green("Handshake done");
+        Logger.magenta("[RTMP] Handshake done \n");
         this.socket.removeAllListeners();
         resolve();
       });
@@ -225,7 +225,7 @@ export class RtmpClient {
       "0"
     )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
     const data: Object[] = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
-    console.log(data);
+    Logger.magenta(`[RTMP] Heartbeat - ${++this.heartbeatCounter} count`);
 
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
@@ -259,7 +259,7 @@ export class RtmpClient {
   public async selectChampion(championIds: Champion[]): Promise<void> {
     if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick) return;
     const selectedChampion = championIds[Math.floor(Math.random() * championIds.length)];
-    Logger.green(`Trying to select champion ${ChampionName[selectedChampion]}`);
+    Logger.magenta(`Trying to select champion ${ChampionName[selectedChampion]}`);
     await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
 
@@ -284,12 +284,12 @@ export class RtmpClient {
   }
 
   public async selectChampionCustom(): Promise<void> {
-    Logger.green(`Trying to select champion`);
+    Logger.magenta(`Trying to select champion`);
     await this.invoke(this.wrap("gameService", "selectChampionV2", [22, 22022]));
   }
 
   private async reportPlayer(gameId: number, offenderSummonerId: number): Promise<void> {
-    Logger.green(`Trying to report player`);
+    Logger.magenta(`Trying to report player`);
     await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
         uuidv4(),

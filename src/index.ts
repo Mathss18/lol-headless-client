@@ -21,6 +21,7 @@ class Main {
       this.virtualClient = await this.setupVirtualClient();
       this.rtmpClient = await this.setupRtmp(this.virtualClient);
       this.xmppClient = await this.setupXmpp(this.virtualClient);
+      this.startGame();
     } catch (error) {
       console.dir(error);
       console.dir(error?.response);
@@ -34,6 +35,7 @@ class Main {
 
   async stop() {
     await this.virtualClient.unregisterLobby();
+    await this.xmppClient.disconnect();
   }
 
   async setupVirtualClient(): Promise<VirtualClient> {
@@ -63,10 +65,10 @@ class Main {
 
   async setupXmpp(virtualClient: VirtualClient): Promise<XmppClient> {
     const tokens = virtualClient.getAllTokens();
-    this.xmppClient = new XmppClient(tokens.lolToken, tokens.geopasToken);
+    this.xmppClient = new XmppClient(tokens.lolToken, tokens.geopasToken, tokens.entitlementsToken);
 
     try {
-      this.xmppClient.connect();
+      await this.xmppClient.connect();
       return this.xmppClient;
     } catch (error) {
       console.error("[XMPP] Failed to connect or handshake:", error);
@@ -74,7 +76,12 @@ class Main {
   }
 
   async startGame() {
-    await this.virtualClient.unregisterLobby();
+    await this.xmppClient.addFriend("Byfa", "BR1");
+    await this.xmppClient.setStatus("chat");
+    await this.xmppClient.getFriendList();
+    await this.xmppClient.sendMessage("isso eh teste", "49f9f9af-1f50-5427-a386-915b9914e8e2@br1.pvp.net/RC-1780326641");
+    await this.xmppClient.sendMessage("isso tbm eh teste", "49f9f9af-1f50-5427-a386-915b9914e8e2@br1.pvp.net");
+    // await this.virtualClient.unregisterLobby();
     // await this.virtualClient.createLobby();
     // await this.virtualClient.selectGamemode(Gamemode.TFT_NORMAL);
     // await this.virtualClient.selectRoles([Role.FILL, Role.UNSELECTED]);

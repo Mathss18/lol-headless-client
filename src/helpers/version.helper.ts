@@ -3,7 +3,7 @@ export class VersionSupplier {
         return "63.0.9.4909983.4789131";
     }
     public static get versionDll(): string {
-        return "22.9.29.4789131";
+        return "24.3.0.3124";
     }
     public static get clientVersion(): string {
         return "14.9.580.2108"; // Current Version

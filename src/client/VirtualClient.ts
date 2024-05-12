@@ -93,7 +93,7 @@ export class VirtualClient {
       Logger.red("Error while logging in! \n");
       process.exit(1);
     }
-    Logger.green("Logged in! \n");
+    Logger.green("[Virtual Client] Logged in! \n");
   }
 
   public getPlayerChampions(): Champion[] {
@@ -282,7 +282,7 @@ export class VirtualClient {
       new RiotClientUser(this._riotToken).getSub()
     );
     const { data } = await sessionSupplier.makeRequest({});
-    Logger.magenta(`[Session Token]: ${data} \n`);
+    Logger.cyan(`[Session Token]: ${data} \n`);
     return data;
   }
 
@@ -314,7 +314,7 @@ export class VirtualClient {
   private async getRefreshSession() {
     const sessionRefreshSupplier = new SessionRefreshSupplier(this._apiRequest, this._sessionToken);
     const { data } = await sessionRefreshSupplier.makeRequest({});
-    Logger.magenta(`[(REFRESH) Session Token]: ${data} \n`);
+    Logger.cyan(`[(REFRESH) Session Token]: ${data} \n`);
     return data;
   }
 

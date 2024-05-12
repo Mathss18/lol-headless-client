@@ -24,7 +24,7 @@ export class EntitlementSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `RiotClient/${VersionSupplier.versionDll} entitlements (;;;)`,
+      "User-Agent": `RiotClient/${VersionSupplier.versionDll} entitlements (Windows;10;;Home Single Language, x64) riot_client/0`,
     };
 
     return headers;

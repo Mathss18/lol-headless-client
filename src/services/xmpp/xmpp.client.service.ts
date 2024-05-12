@@ -1,229 +1,241 @@
-import tls, { connect } from "tls";
+import * as tls from "tls";
 import { REGION } from "../../config/regions";
+import { Logger } from "../../utils/logger.util";
+import { setTimeout as sleep } from "timers/promises";
+import { parseString } from "xml2js";
+import { generateRandomDigitsForChat } from "./xmpp.utils";
+
+export type PlayerStatus = "online" | "offline" | "away";
+export type Friend = {
+  jid: string;
+  puuid: string;
+  name: string;
+  state: PlayerStatus;
+  lastOnline: string;
+  internalName: string;
+  tagline: string;
+};
 
 export class XmppClient {
+  public friendList = [];
   private socket: tls.TLSSocket;
-  private heartbeat: NodeJS.Timeout;
-  private presenceCache: any;
-  constructor(private rsoToken: string, private pasToken: string) {
-    console.log("XmppClient created");
+  private heartBeat: NodeJS.Timeout;
+  private heartbeatCounter = 0;
+  private host = REGION.xmppUrl;
+  private port = 5223;
+  private xmppRegion = REGION.regionLower;
+  private authMessages = [
+    `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
+    `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
+    `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
+    `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-3138377982</resource></bind></iq>`,
+    `<iq type="set" id="xmpp_entitlements_0"><entitlements xmlns="urn:riotgames:entitlements"><token>${this.entitlementsToken}</token></entitlements></iq><iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><platform>riot</platform></session></iq>`,
+    `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
+  ];
+
+  constructor(private rsoToken: string, private pasToken: string, private entitlementsToken: string) {}
+
+  public connect() {
+    return new Promise<void>((resolve, reject) => {
+      this.socket = tls.connect(this.port, this.host);
+
+      this.socket
+        .on("secureConnect", async () => {
+          Logger.yellow("[XMPP] Connected. \n");
+          this.read();
+          await sleep(500);
+          await this.sendAuthMessages();
+          await sleep(2000);
+          this.heartBeat = setInterval(() => {
+            this.heartbeat();
+          }, 29000);
+          resolve();
+        })
+        .on("error", (error) => {
+          console.error("Error:", error);
+          reject(error);
+        })
+        .on("end", () => {
+          clearInterval(this.heartBeat);
+          Logger.yellow("[XMPP] Server ended the connection");
+        });
+    });
   }
-  connect() {
-    try {
-      this.presenceCache = {};
 
-      const address = REGION.xmppUrl;
-      const port = 5223;
-      const xmppRegion = REGION.regionLower;
-
-      const messages = [
-        `<?xml version="1.0"?><stream:stream to="${xmppRegion}.pvp.net" version="1.0" xmlns:stream="http://etherx.jabber.org/streams">`,
-        "",
-        `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
-        `<?xml version="1.0"?><stream:stream to="${xmppRegion}.pvp.net" version="1.0" xmlns:stream="http://etherx.jabber.org/streams">`,
-        "",
-        '<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"></bind></iq>',
-        '<iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"/></iq>',
-        '<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>', // get friends list
-        '<iq id="roster_add_1" type="set"><query xmlns="jabber:iq:riotgames:roster"><item subscription="pending_out"><id name="PresentesLOL" tagline="1033"></id></item></query></iq>',
-        "<presence/>",
-      ];
-
-      const sock = connect(port, address, {}, () => {
-        try {
-          console.log("Connected!");
-
-          sendNext();
-        } catch (e) {
-          console.log(e);
-        }
-      });
-      this.socket = sock;
-
-      const send = (data) => {
-        try {
-          if (sock.readyState === "open")
-            sock.write(data, "utf8", () => {
-              if (data !== " ") console.log("-> " + data);
-            });
-
-          this.heartbeat = setTimeout(() => send(" "), 150_000);
-        } catch (e) {
-          console.log(e);
-        }
-      };
-
-      const sendNext = () => send(messages.shift());
-
-      let bufferedMessage = "";
-
-      sock.on("data", (data) => {
-        try {
-          data = data.toString();
-          console.log("<- " + data);
-          if (messages.length > 0) sendNext();
-
-          // handle riot splitting messages into multiple parts
-          if (data.startsWith("<?xml")) return;
-          let oldBufferedMessage = null;
-          while (oldBufferedMessage !== bufferedMessage) {
-            oldBufferedMessage = bufferedMessage;
-            data = bufferedMessage + data;
-            if (data === "") return;
-            if (!data.startsWith("<")) return console.log("RIOT: xml presence data doesn't start with '<'! " + data);
-
-            const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
-
-            // check for self closing tag eg <presence />
-            if (data.search(/<[^<>]+\/>/) === 0) data = data.replace("/>", `></${firstTagName}>`);
-
-            let closingTagIndex = data.indexOf(`</${firstTagName}>`);
-            if (closingTagIndex === -1) {
-              // message is split, we need to wait for the end
-              bufferedMessage = data;
-              break;
-            }
-
-            // check for tag inside itself eg <a><a></a></a>
-            // this happens when you send a message to someone
-            let containedTags = 0;
-            let nextTagIndex = data.indexOf(`<${firstTagName}`, 1);
-            while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
-              containedTags++;
-              nextTagIndex = data.indexOf(`<${firstTagName}`, nextTagIndex + 1);
-            }
-
-            while (containedTags > 0) {
-              closingTagIndex = data.indexOf(`</${firstTagName}>`, closingTagIndex + 1);
-              containedTags--;
-            }
-
-            const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
-            bufferedMessage = data.substr(firstTagEnd); // will be empty string if only one tag
-            data = data.substr(0, firstTagEnd);
-
-            if (firstTagName === "presence") {
-              processXMLData(data, this.presenceCache);
-            } else if (firstTagName === "iq") {
-              if (data.includes("jabber:iq:riotgames:roster")) processFriendsList(data);
-              //   } else if (data.includes("_xmpp_session") && data.includes("urn:ietf:params:xml:ns:xmpp-session")) {
-              //     this.processOwnUsername(data, this.decodeToken(PAS).sub);
-              //   }
-            } else if (firstTagName === "failure") {
-              const errorStartIndex = data.indexOf(">") + 1;
-              const error = data.substring(errorStartIndex, closingTagIndex);
-              if (data.includes("token-expired")) {
-                // BdApi.alert("token expired!")
-                console.log(error);
-                // this.restart();
-              } else {
-                console.error(data);
-                console.log("Riot XMPP Connection failed! " + data);
-                // this.destroy();
-              }
-            }
-
-            data = "";
-          }
-        } catch (e) {
-          console.log(e);
-        }
-      });
-
-      sock.on("error", console.error);
-      sock.on("close", () => {
-        // if (!this.enabled) return console.log("Socket disconnected!");
-
-        console.error("Riot Connection Closed! Retrying in 5 seconds...");
-
-        clearTimeout(this.heartbeat);
-      });
-    } catch (e) {
-      console.log(e);
+  public async disconnect() {
+    if (this.socket) {
+      this.socket.end();
+      Logger.yellow("[XMPP] Disconnected.");
     }
-    console.log("XmppClient connected");
   }
-  disconnect() {
-    console.log("XmppClient disconnected");
+
+  public async addFriend(username: string, tagline: string) {
+    if (tagline.startsWith("#")) tagline = tagline.substring(1);
+    await this.write(
+      `<iq id="roster_add_1" type="set"><query xmlns="jabber:iq:riotgames:roster"><item subscription="pending_out"><id name="${username}" tagline="${tagline.toLowerCase()}"></id></item></query></iq>`
+    );
   }
-}
 
-function processXMLData(data, presenceCache) {
-  try {
-    const puuid = data.substr(16, 36);
+  public async setStatus(status: "chat" | "away") {
+    await this.write(
+      `<presence id='presence_1'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>1715446396497</s.t><m></m><p>{&quot;championId&quot;:&quot;&quot;,&quot;companionId&quot;:&quot;1&quot;,&quot;damageSkinId&quot;:&quot;1&quot;,&quot;gameQueueType&quot;:&quot;&quot;,&quot;gameStatus&quot;:&quot;outOfGame&quot;,&quot;iconOverride&quot;:&quot;&quot;,&quot;legendaryMasteryScore&quot;:&quot;0&quot;,&quot;level&quot;:&quot;30&quot;,&quot;mapId&quot;:&quot;&quot;,&quot;mapSkinId&quot;:&quot;1&quot;,&quot;masteryScore&quot;:&quot;2&quot;,&quot;profileIcon&quot;:&quot;907&quot;,&quot;puuid&quot;:&quot;49f9f9af-1f50-5427-a386-915b9914e8e2&quot;,&quot;rankedPrevSeasonDivision&quot;:&quot;NA&quot;,&quot;rankedPrevSeasonTier&quot;:&quot;&quot;,&quot;regalia&quot;:&quot;{\&quot;bannerType\&quot;:2,\&quot;crestType\&quot;:1,\&quot;selectedPrestigeCrest\&quot;:0}&quot;,&quot;skinVariant&quot;:&quot;&quot;,&quot;skinname&quot;:&quot;&quot;}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
+    );
+  }
 
-    // extract lol presence
-    const lolData = extractDataFromXML(data, "league_of_legends");
-    if (lolData) {
-      const presenceUnparsed = extractDataFromXML(lolData, "p");
-      if (presenceUnparsed) {
-        // regalia is an object within the object, causes issues with parser
-        const presenceHalfParsed = presenceUnparsed
-          .replace(/&quot;/g, '"')
-          .replace(/&apos;/g, '"')
-          .replace(/"regalia":.+}",/, "");
-        try {
-          const presenceData = JSON.parse(presenceHalfParsed);
-          const timestamp = extractDataFromXML(lolData, "s.t");
-          const status = extractDataFromXML(lolData, "st");
-          console.log({ presenceData });
-          // this.processPresenceData(puuid, presenceData, status, timestamp);
-        } catch (e) {
-          console.error(data);
-          console.log("Could not JSON parse Lol presence data!" + e);
-        }
+  public async sendMessage(message: string, jid: string) {
+    const id = generateRandomDigitsForChat(13);
+    console.log({ id });
+    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
+  }
+
+  public async getFriendList() {
+    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
+  }
+
+  private async sendAuthMessages(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      for (const message of this.authMessages) {
+        await this.write(message);
+        await sleep(500);
       }
-    } else {
-      const previousPresence = presenceCache[puuid];
-      delete presenceCache[puuid];
+      await sleep(2000);
+      resolve();
+    });
+  }
+
+  private read(): void {
+    this.socket.on("data", async (data) => {
+      let bufferedMessage = "";
+      try {
+        data = data.toString();
+        Logger.yellow("[RECEIVE XMPP <-] ");
+        console.dirxml(data);
+        console.log("\n");
+
+        // handle riot splitting messages into multiple parts
+        if (data.startsWith("<?xml")) return;
+        let oldBufferedMessage = null;
+        while (oldBufferedMessage !== bufferedMessage) {
+          oldBufferedMessage = bufferedMessage;
+          data = bufferedMessage + data;
+          if (data === "") return;
+          if (!data.startsWith("<")) return console.log("RIOT: xml presence data doesn't start with '<'! " + data);
+
+          const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
+
+          // check for self closing tag eg <presence />
+          if (data.search(/<[^<>]+\/>/) === 0) data = data.replace("/>", `></${firstTagName}>`);
+
+          let closingTagIndex = data.indexOf(`</${firstTagName}>`);
+          if (closingTagIndex === -1) {
+            // message is split, we need to wait for the end
+            bufferedMessage = data;
+            break;
+          }
+
+          // check for tag inside itself eg <a><a></a></a>
+          // this happens when you send a message to someone
+          let containedTags = 0;
+          let nextTagIndex = data.indexOf(`<${firstTagName}`, 1);
+          while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
+            containedTags++;
+            nextTagIndex = data.indexOf(`<${firstTagName}`, nextTagIndex + 1);
+          }
+
+          while (containedTags > 0) {
+            closingTagIndex = data.indexOf(`</${firstTagName}>`, closingTagIndex + 1);
+            containedTags--;
+          }
+
+          const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
+          bufferedMessage = data.substr(firstTagEnd); // will be empty string if only one tag
+          data = data.substr(0, firstTagEnd);
+
+          await this.parseStringPromise(data);
+
+          data = "";
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    this.socket.once("error", (error) => {
+      console.log(error);
+    });
+  }
+
+  private heartbeat(): void {
+    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
+    this.write(" ");
+  }
+
+  private async write(data: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.socket.readyState === "open")
+        this.socket.write(data, "utf8", (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            Logger.yellow("[SEND XMPP ->] ");
+            console.dirxml(data);
+            console.log("\n");
+            resolve();
+          }
+        });
+    });
+  }
+
+  private async parseStringPromise(xml: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      parseString(xml, (err, result) => {
+        if (err) reject(err);
+        else {
+          this.handleParsedXml(result);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private handleParsedXml(jsonObj: any): void {
+    if (jsonObj.hasOwnProperty("iq")) {
+      console.log("----------------------");
+      if (!jsonObj.iq?.query?.length) {
+        return;
+      }
+      const xmlns = jsonObj.iq?.query[0]?.$?.xmlns;
+      if (xmlns === "jabber:iq:privacy") {
+        // console.log(jsonObj.iq?.query[0]?.list);
+      }
+      if (xmlns === "jabber:iq:riotgames:roster") {
+        this.handleFriendList(jsonObj.iq?.query[0]?.item);
+      }
+
+      console.log("----------------------");
     }
-  } catch (e) {
-    console.error(data);
-    console.log(e);
+    if (jsonObj.hasOwnProperty("message")) {
+      const { id, from, to, stamp, type } = jsonObj.message.$;
+      const message = jsonObj.message.body[0];
+      console.log({ id, from, to, stamp, type, message });
+      console.log("----------------------");
+    }
+    if (jsonObj.hasOwnProperty("presence")) {
+    }
   }
-}
 
-function extractDataFromXML(xml, tagName, startIndex?: number, endIndex?: number) {
-  const dataStartIndex = xml.indexOf(`<${tagName}>`, startIndex, endIndex);
-  const dataEndIndex = xml.indexOf(`</${tagName}>`, dataStartIndex, endIndex);
-  if (dataStartIndex >= 0 && dataEndIndex > dataStartIndex) {
-    const data = xml.substring(dataStartIndex + tagName.length + 2, dataEndIndex);
-    if (data) return data;
-  }
-}
+  private handleFriendList(players) {
+    this.friendList = [];
 
-function processFriendsList(data) {
-  console.log({ data });
-  const queryTag = data.substring(
-    data.indexOf("<query xmlns='jabber:iq:riotgames:roster'>") + 42,
-    data.indexOf("</query>")
-  );
-  const items = queryTag.split("</item>");
+    for (const player of players) {
+      const { jid, puuid, name } = player?.$;
+      const state = player?.state[0];
+      const lastOnline = player.last_online[0];
+      const internalName = player.id[0].$.name;
+      const tagline = player.id[0].$.tagline;
+      this.friendList.push({ jid, puuid, name, state, lastOnline, internalName, tagline });
+    }
 
-  for (const item of items) {
-    if (!item) continue;
-
-    const puuid = item.substr(11, 36);
-
-    // riot ID
-    const idTagIndex = item.indexOf("<id ");
-
-    const usernameIndex = item.indexOf("name=", idTagIndex) + 6;
-    const username = item.substring(usernameIndex, item.indexOf("' ", usernameIndex));
-
-    const taglineIndex = item.indexOf("tagline=", idTagIndex) + 9;
-    const tagline = item.substring(taglineIndex, item.indexOf("'/>", taglineIndex));
-
-    console.log(`${username}#${tagline}`);
-
-    // lol summoner name
-    const lolTagIndex = item.indexOf("<lol ");
-
-    // if (lolTagIndex > -1) {
-    //   const lolNameIndex = item.indexOf("name=", lolTagIndex) + 6;
-    //   const lolName = item.substring(lolNameIndex, item.indexOf("'", lolNameIndex));
-
-    //   this.riotPUUIDToSummonerName[puuid] = lolName;
-    // }
+    console.log(this.friendList);
   }
 }

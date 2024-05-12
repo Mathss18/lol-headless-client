@@ -129,7 +129,7 @@ export class RtmpPacketReader {
     if (this.client.DSId) return;
     if (result.getTypedObject("data").getString("id")) {
       this.client.DSId = result.getTypedObject("data").getString("id");
-      Logger.green(`DSiD: ${this.client.DSId} \n`);
+      Logger.magenta(`[RTMP] DSiD: ${this.client.DSId} \n`);
     }
   }
 
