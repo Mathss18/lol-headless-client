@@ -1,8 +1,6 @@
 node_modules
 .env
 __maths__
-dist
 .DS_Store
 tsconfig.json
 tsup.config.ts
-src
