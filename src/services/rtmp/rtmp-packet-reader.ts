@@ -1,4 +1,6 @@
 import { ChampionName } from "../../enums/champion.enum";
+import { EventCallbackName } from "../../enums/event-callback-name.enum";
+import { CallbackEvent } from "../../main";
 import { Logger } from "../../utils/logger.util";
 import { AMFDecoder } from "./amf/amf-decoder";
 import { RtmpClient } from "./rtmp-client.service";
@@ -10,7 +12,12 @@ export class RtmpPacketReader {
   public packets: Map<string, TypedObject> = new Map();
   private decoder = new AMFDecoder();
   private tag: string | null = null;
+  private _callback: (data: CallbackEvent) => void;
   constructor(private client: RtmpClient) {}
+
+  public listen(callback: (data: CallbackEvent) => void) {
+    this._callback = callback;
+  }
 
   public handleReceivedData(data: Buffer): void {
     let offset = 0;
@@ -102,16 +109,10 @@ export class RtmpPacketReader {
         // Handle Video Message
         break;
       case 0x11: // AMF3 Command Message
-        result = this.decoder.decode(
-          packet.getBody(),
-          new TypedObject("Invoke")
-        );
+        result = this.decoder.decode(packet.getBody(), new TypedObject("Invoke"));
         break;
       case 0x14: // AMF0 Command Message
-        result = this.decoder.decode(
-          packet.getBody(),
-          new TypedObject("Connect")
-        );
+        result = this.decoder.decode(packet.getBody(), new TypedObject("Connect"));
         break;
       default:
         console.warn(`Unhandled RTMP message type: ${messageType}`);
@@ -130,6 +131,7 @@ export class RtmpPacketReader {
     if (result.getTypedObject("data").getString("id")) {
       this.client.DSId = result.getTypedObject("data").getString("id");
       Logger.magenta(`[RTMP] DSiD: ${this.client.DSId} \n`);
+      if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_DSID, data: this.client.DSId });
     }
   }
 
@@ -143,8 +145,7 @@ export class RtmpPacketReader {
   private championSelectActions(result: TypedObject): void {
     const body = result.getTypedObject("data")?.getTypedObject("body");
     const isMethodName = body?.getString("methodName") === "tbdGameDtoV1";
-    const isServiceName =
-      body?.getString("serviceName") === "teambuilder-draft";
+    const isServiceName = body?.getString("serviceName") === "teambuilder-draft";
 
     if (!isMethodName || !isServiceName) return;
     // if (this.client.pickState.isChampPicked) return;
@@ -160,6 +161,7 @@ export class RtmpPacketReader {
     if (subphase === "GAME_STARTING") {
       this.client.pickState.gameStarted = true;
       Logger.green("=== Game started! ===");
+      if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_GAME_STARTED });
       return;
     }
 
@@ -198,6 +200,11 @@ export class RtmpPacketReader {
             this.client.pickState.isChampBanned = true;
             this.client.pickState.bannedChampion = item.championId;
             Logger.red(`Banned champion: ${ChampionName[item.championId]}\n`);
+            if (this._callback)
+              this._callback({
+                eventName: EventCallbackName.RTMP_BANNED_CHAMPTION,
+                data: ChampionName[item.championId],
+              });
           }
         }
       }
@@ -209,13 +216,16 @@ export class RtmpPacketReader {
       for (const item of group) {
         if (item.actorCellId === myCellId && item.type === "PICK") {
           this.client.pickState.pickActionId = item.actionId;
-          Logger.green(
-            `Pick actionID ${this.client.pickState.pickActionId} \n`
-          );
+          Logger.green(`Pick actionID ${this.client.pickState.pickActionId} \n`);
           if (item.completed === true) {
             this.client.pickState.isChampPicked = true;
             this.client.pickState.pickedChampion = item.championId;
             Logger.green(`Picked champion: ${ChampionName[item.championId]}\n`);
+            if (this._callback)
+              this._callback({
+                eventName: EventCallbackName.RTMP_PICKED_CHAMPTION,
+                data: ChampionName[item.championId],
+              });
           }
         }
       }
@@ -234,6 +244,7 @@ export class RtmpPacketReader {
     for (const action of currentActionSet) {
       if (action.actorCellId === actorCellId && action.type === type) {
         Logger.green(`Is my turn to ${type} \n`);
+        if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_MY_TURN_TO_PICK_CHAMPTION });
         return true;
       }
     }

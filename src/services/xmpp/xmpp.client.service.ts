@@ -5,6 +5,8 @@ import { parseString } from "xml2js";
 import { generateRandomDigitsForChat } from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
 import { getRegion } from "../../config/regions";
+import { CallbackEvent } from "../../main";
+import { EventCallbackName } from "../../enums/event-callback-name.enum";
 
 export type PlayerStatus = "online" | "offline" | "away";
 export type Friend = {
@@ -27,6 +29,7 @@ export class XmppClient {
   private port = 5223;
   private xmppRegion = "";
   private authMessages: string[] = [];
+  private _callback: (data: CallbackEvent) => void;
 
   constructor(
     private rsoToken: string,
@@ -47,6 +50,10 @@ export class XmppClient {
     ];
   }
 
+  public listen(callback: (data: CallbackEvent) => void) {
+    this._callback = callback;
+  }
+
   public connect() {
     return new Promise<void>((resolve, reject) => {
       this.socket = tls.connect(this.port, this.host);
@@ -54,6 +61,7 @@ export class XmppClient {
       this.socket
         .on("secureConnect", async () => {
           Logger.yellow("[XMPP] Connected. \n");
+          if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_CONNECTED });
           this.read();
           await sleep(500);
           await this.sendAuthMessages();
@@ -72,6 +80,7 @@ export class XmppClient {
         .on("end", () => {
           clearInterval(this.heartBeat);
           Logger.yellow("[XMPP] Server ended the connection");
+          if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
         });
     });
   }
@@ -80,6 +89,7 @@ export class XmppClient {
     if (this.socket) {
       this.socket.end();
       Logger.yellow("[XMPP] Disconnected.");
+      if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
     }
   }
 
@@ -127,8 +137,8 @@ export class XmppClient {
       try {
         data = data.toString();
         Logger.yellow("[RECEIVE XMPP <-] ");
-        console.dirxml(data);
-        console.log("\n");
+        Logger.default(data + "\n");
+        if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_RECEIVED_RAW, data });
 
         // handle riot splitting messages into multiple parts
         if (data.startsWith("<?xml")) return;
@@ -184,8 +194,9 @@ export class XmppClient {
   }
 
   private heartbeat(): void {
-    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
     this.write(" ");
+    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
+    if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_HEARTBEAT, data: this.heartbeatCounter });
   }
 
   private async write(data: string): Promise<void> {
@@ -195,9 +206,9 @@ export class XmppClient {
           if (err) {
             reject(err);
           } else {
-            Logger.yellow("[SEND XMPP ->] ");
-            console.dirxml(data);
-            console.log("\n");
+            Logger.yellow("[SENT XMPP ->] ");
+            Logger.default(data + "\n");
+            if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_SENT_RAW, data });
             resolve();
           }
         });
@@ -219,7 +230,6 @@ export class XmppClient {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleParsedXml(jsonObj: any): void {
     if (jsonObj.hasOwnProperty("iq")) {
-      console.log("----------------------");
       if (!jsonObj.iq?.query?.length) {
         return;
       }
@@ -228,16 +238,19 @@ export class XmppClient {
         // console.log(jsonObj.iq?.query[0]?.list);
       }
       if (xmlns === "jabber:iq:riotgames:roster") {
-        this.handleFriendList(jsonObj.iq?.query[0]?.item);
+        this.handleFriendList(jsonObj.iq?.query[0]?.item ?? []);
       }
-
-      console.log("----------------------");
     }
     if (jsonObj.hasOwnProperty("message")) {
       const { id, from, to, stamp, type } = jsonObj.message.$;
       const message = jsonObj.message.body[0];
-      console.log({ id, from, to, stamp, type, message });
-      console.log("----------------------");
+
+      Logger.default({ id, from, to, stamp, type, message });
+      if (this._callback)
+        this._callback({
+          eventName: EventCallbackName.XMPP_CHAT_RECEIVED,
+          data: { id, from, to, stamp, type, message },
+        });
     }
     if (jsonObj.hasOwnProperty("presence")) {
     }

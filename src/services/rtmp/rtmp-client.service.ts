@@ -13,6 +13,8 @@ import { AMFEncoder } from "./amf/amf-encoder";
 import { Logger } from "../../utils/logger.util";
 import { Champion, ChampionName } from "../../enums/champion.enum";
 import { setTimeout as sleep } from "timers/promises";
+import { CallbackEvent } from "../../main";
+import { EventCallbackName } from "../../enums/event-callback-name.enum";
 
 export class RtmpClient {
   private socket!: tls.TLSSocket;
@@ -38,13 +40,14 @@ export class RtmpClient {
   private messageCounter = 0;
   private heartbeatCounter = 0;
   private amfEncoder = new AMFEncoder();
+  private _callback: (data: CallbackEvent) => void
 
   constructor(
     private host: string,
     private port: number,
     private tokens: PublicTokens,
     private userData: UserData,
-    private username: string
+    private username: string,
   ) {
     this.rtmpConnected = false;
     this.baseRtmpInfo = new RtmoInfoBuilder();
@@ -60,6 +63,11 @@ export class RtmpClient {
     this.DSId = null;
   }
 
+  public listen(callback: (data: CallbackEvent) => void) {
+    this._callback = callback;
+    this.rtmpPacketReader.listen(this._callback);
+  }
+
   public async connect(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const socket = net.connect(this.port, this.host, () => {
@@ -71,6 +79,7 @@ export class RtmpClient {
         this.socket
           .on("secureConnect", () => {
             Logger.magenta("[RTMP] TLS connected \n");
+            if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_TLS_CONNECTED });
             this.rtmpConnected = true;
             resolve();
           })
@@ -93,6 +102,7 @@ export class RtmpClient {
       handshake.initialize(this.socket);
       handshake.once("done", () => {
         Logger.magenta("[RTMP] Handshake done \n");
+        if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_HANDSHAKE_DONE });
         this.socket.removeAllListeners();
         resolve();
       });
@@ -232,7 +242,8 @@ export class RtmpClient {
       "0"
     )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
     const data: Object[] = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
-    Logger.magenta(`[RTMP] Heartbeat - ${++this.heartbeatCounter} count`);
+    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count`);
+    if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_HEARTBEAT, data: this.heartbeatCounter });
 
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));

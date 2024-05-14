@@ -9,12 +9,12 @@ enum FgColors {
   FG_WHITE = "\x1b[37m",
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 enum BgColors {
   BG_BLACK = "\x1b[40m",
   BG_RED = "\x1b[41m",
   BG_GREEN = "\x1b[42m",
   BG_YELLOW = "\x1b[44m",
-  BG_BLUE = "\x1b[44m",
   BG_MAGENTA = "\x1b[45m",
   BG_CYAN = "\x1b[46m",
   BG_WHITE = "\x1b[47m",
@@ -31,31 +31,34 @@ enum Options {
 }
 
 export class Logger {
+  private static show() {
+    return process.env?.LOL_HEADLESS_CLIENT_ENABLE_LOGS === "true";
+  }
   static default(message: unknown) {
-    console.log(message);
+    this.show() && console.log(message);
   }
   static black(message: unknown) {
-    console.log(FgColors.FG_BLACK, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_BLACK, message, Options.RESET);
   }
   static red(message: unknown) {
-    console.log(FgColors.FG_RED, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_RED, message, Options.RESET);
   }
   static green(message: unknown) {
-    console.log(FgColors.FG_GREEN, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_GREEN, message, Options.RESET);
   }
   static yellow(message: unknown) {
-    console.log(FgColors.FG_YELLOW, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_YELLOW, message, Options.RESET);
   }
   static blue(message: unknown) {
-    console.log(FgColors.FG_BLUE, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_BLUE, message, Options.RESET);
   }
   static magenta(message: unknown) {
-    console.log(FgColors.FG_MAGENTA, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_MAGENTA, message, Options.RESET);
   }
   static cyan(message: unknown) {
-    console.log(FgColors.FG_CYAN, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_CYAN, message, Options.RESET);
   }
   static white(message: unknown) {
-    console.log(FgColors.FG_WHITE, message, Options.RESET);
+    this.show() && console.log(FgColors.FG_WHITE, message, Options.RESET);
   }
 }

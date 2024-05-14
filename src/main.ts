@@ -9,15 +9,26 @@ import { Champion } from "./enums/champion.enum";
 import { ChatStatus, XmppClient } from "./services/xmpp/xmpp.client.service";
 import { Region } from "./enums/region.enum";
 import { getRegion } from "./config/regions";
+import { EventCallbackName } from "./enums/event-callback-name.enum";
+
+export type CallbackEvent = {
+  eventName: EventCallbackName;
+  data?: any;
+};
 
 export class HeadlessClient {
   private virtualClient: VirtualClient;
   private rtmpClient: RtmpClient;
   private xmppClient: XmppClient;
   private region: Region;
+  private callback: (data: CallbackEvent) => void;
 
   constructor({ region }: { region: Region }) {
     this.region = region;
+  }
+
+  public listen(callback: (data: CallbackEvent) => void) {
+    this.callback = callback;
   }
 
   public async login({ username, password }: { username: string; password: string }) {
@@ -88,6 +99,9 @@ export class HeadlessClient {
 
   private async setupVirtualClient(username: string, password: string, region: Region): Promise<VirtualClient> {
     this.virtualClient = new VirtualClient();
+
+    if (this.callback) this.virtualClient.listen(this.callback);
+
     await this.virtualClient.login(username, password, region);
     return this.virtualClient;
   }
@@ -98,6 +112,8 @@ export class HeadlessClient {
     const { rtmpHost, rtmpPort } = getRegion(this.region);
 
     this.rtmpClient = new RtmpClient(rtmpHost, rtmpPort, tokens, userData, username);
+
+    if (this.callback) this.rtmpClient.listen(this.callback);
 
     await this.rtmpClient.connect();
     await this.rtmpClient.handshake();
@@ -112,6 +128,8 @@ export class HeadlessClient {
     const { lolToken, geopasToken, entitlementsToken } = virtualClient.getAllTokens();
 
     this.xmppClient = new XmppClient(lolToken, geopasToken, entitlementsToken, this.region);
+
+    if (this.callback) this.xmppClient.listen(this.callback);
 
     await this.xmppClient.connect();
     return this.xmppClient;

@@ -57,7 +57,11 @@ import { Champion, Gamemode, Region, Role, HeadlessClient } from "lol-headless-c
 
 const hc = new HeadlessClient({ region: Region.BR });
 
+const callback = ({ eventName, data }: CallbackEvent) => console.log({ eventName, data });
+
 const main = async () => {
+  hc.listen(callback); // Add callback function to HC events 
+
   await hc.login({ username: "YOUR-USERNAME", password: "YOUR-PASSWORD" }); // Login
 
   await hc.addFriend({ username: "FRIEND-USERNAME", tagline: "FRIEND-TAGLINE" }); // Add New Friend
