@@ -4,3 +4,4 @@ __maths__
 .DS_Store
 tsconfig.json
 tsup.config.ts
+src/example2.ts

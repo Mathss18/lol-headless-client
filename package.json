@@ -8,6 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx ts-node src/index.ts",
     "example": "npx ts-node src/example.ts",
+    "example2": "npx ts-node src/example2.ts",
     "build": "tsup",
     "lint": "eslint **/*.ts --fix",
     "prepublishOnly": "npm run build"

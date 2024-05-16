@@ -118,7 +118,10 @@ export class RtmpPacketReader {
         console.warn(`Unhandled RTMP message type: ${messageType}`);
     }
     if (!result) return;
-    process.env?.LOL_HEADLESS_CLIENT_RTMP_LOGS === "true" && console.log(result);
+    if (process.env?.LOL_HEADLESS_CLIENT_RTMP_LOGS === "true") {
+      Logger.magenta("[SENT RTMP ->] \n");
+      Logger.default(result);
+    }
 
     // packet actions
     this.setDsid(result);

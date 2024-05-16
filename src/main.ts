@@ -24,6 +24,8 @@ export class HeadlessClient {
   private callback: (data: CallbackEvent) => void;
 
   constructor({ region }: { region: Region }) {
+    console.log(process.env)
+    return;
     this.region = region;
   }
 

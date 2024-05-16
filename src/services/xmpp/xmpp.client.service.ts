@@ -253,6 +253,16 @@ export class XmppClient {
         });
     }
     if (jsonObj.hasOwnProperty("presence")) {
+      // console.log(jsonObj.presence?.games[0]?.league_of_legends[0]);
+      // const from = jsonObj.presence.$.from;
+      // const chatShow = jsonObj.presence.show[0];
+      // const chatStatus = jsonObj.presence.status[0];
+      // const profileInfo = jsonObj.presence?.games[0]?.league_of_legends[0]?.p[0];
+      this.handlePresense(jsonObj.presence);
+      // Logger.default({ from });
+      // Logger.default({ chatShow });
+      // Logger.default({ chatStatus });
+      // Logger.default(profileInfo);
     }
   }
 
@@ -267,5 +277,20 @@ export class XmppClient {
       const tagline = player.id[0].$.tagline;
       this.friendList.push({ jid, puuid, name, state, lastOnline, internalName, tagline });
     }
+
+    console.log(this.friendList);
+  }
+
+  private handlePresense(presence) {
+    try {
+      const from = presence.$.from;
+      const chatShow = presence.show[0];
+      const chatStatus = presence.status[0];
+      const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
+      Logger.default({ from });
+      Logger.default({ chatShow });
+      Logger.default({ chatStatus });
+      Logger.default(profileInfo);
+    } catch (error) {}
   }
 }
