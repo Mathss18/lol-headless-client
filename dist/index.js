@@ -30,6 +30,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var src_exports = {};
 __export(src_exports, {
   Champion: () => Champion,
+  EventCallbackName: () => EventCallbackName,
   Gamemode: () => Gamemode,
   HeadlessClient: () => HeadlessClient,
   Region: () => Region,
@@ -405,6 +406,44 @@ var Role = /* @__PURE__ */ ((Role2) => {
   return Role2;
 })(Role || {});
 
+// src/enums/event-callback-name.enum.ts
+var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
+  EventCallbackName2["VIRTUAL_CLIENT_RIOT_TOKEN"] = "VIRTUAL_CLIENT_RIOT_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_LOL_TOKEN"] = "VIRTUAL_CLIENT_LOL_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_PARTY_TOKEN"] = "VIRTUAL_CLIENT_PARTY_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_LOBBY_UNREGISTERED"] = "VIRTUAL_CLIENT_LOBBY_UNREGISTERED";
+  EventCallbackName2["VIRTUAL_CLIENT_LOBBY_CREATED"] = "VIRTUAL_CLIENT_LOBBY_CREATED";
+  EventCallbackName2["VIRTUAL_CLIENT_PLAYER_COUNT"] = "VIRTUAL_CLIENT_PLAYER_COUNT";
+  EventCallbackName2["VIRTUAL_CLIENT_ROLES_SELECTED"] = "VIRTUAL_CLIENT_ROLES_SELECTED";
+  EventCallbackName2["VIRTUAL_CLIENT_FINDING_MATCH"] = "VIRTUAL_CLIENT_FINDING_MATCH";
+  EventCallbackName2["VIRTUAL_CLIENT_MATCH_RESTRICTED"] = "VIRTUAL_CLIENT_MATCH_RESTRICTED";
+  EventCallbackName2["VIRTUAL_CLIENT_MATCH_ACCEPTED"] = "VIRTUAL_CLIENT_MATCH_ACCEPTED";
+  EventCallbackName2["VIRTUAL_CLIENT_USER_INFO_TOKEN"] = "VIRTUAL_CLIENT_USER_INFO_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_ENTITLEMENT_TOKEN"] = "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_QUEUE_TOKEN"] = "VIRTUAL_CLIENT_QUEUE_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_SESSION_TOKEN"] = "VIRTUAL_CLIENT_SESSION_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_GEOPASS_TOKEN"] = "VIRTUAL_CLIENT_GEOPASS_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_USER_DATA_TOKEN"] = "VIRTUAL_CLIENT_USER_DATA_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_INVENTORY_TOKEN"] = "VIRTUAL_CLIENT_INVENTORY_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN"] = "VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_SIPT_TOKEN"] = "VIRTUAL_CLIENT_SIPT_TOKEN";
+  EventCallbackName2["RTMP_TLS_CONNECTED"] = "RTMP_TLS_CONNECTED";
+  EventCallbackName2["RTMP_HANDSHAKE_DONE"] = "RTMP_HANDSHAKE_DONE";
+  EventCallbackName2["RTMP_HEARTBEAT"] = "RTMP_HEARTBEAT";
+  EventCallbackName2["RTMP_DSID"] = "RTMP_DSID";
+  EventCallbackName2["RTMP_GAME_STARTED"] = "RTMP_GAME_STARTED";
+  EventCallbackName2["RTMP_BANNED_CHAMPTION"] = "RTMP_BANNED_CHAMPTION";
+  EventCallbackName2["RTMP_PICKED_CHAMPTION"] = "RTMP_PICKED_CHAMPTION";
+  EventCallbackName2["RTMP_MY_TURN_TO_PICK_CHAMPTION"] = "RTMP_MY_TURN_TO_PICK_CHAMPTION";
+  EventCallbackName2["XMPP_CONNECTED"] = "XMPP_CONNECTED";
+  EventCallbackName2["XMPP_HEARTBEAT"] = "XMPP_HEARTBEAT";
+  EventCallbackName2["XMPP_DISCONNECTED"] = "XMPP_DISCONNECTED";
+  EventCallbackName2["XMPP_RECEIVED_RAW"] = "XMPP_RECEIVED_RAW";
+  EventCallbackName2["XMPP_SENT_RAW"] = "XMPP_SENT_RAW";
+  EventCallbackName2["XMPP_CHAT_RECEIVED"] = "XMPP_CHAT_RECEIVED";
+  return EventCallbackName2;
+})(EventCallbackName || {});
+
 // src/main.ts
 var dotenv = __toESM(require("dotenv"));
 
@@ -430,32 +469,35 @@ var import_base64url = __toESM(require("base64url"));
 
 // src/utils/logger.util.ts
 var Logger = class {
+  static show() {
+    return process.env?.LOL_HEADLESS_CLIENT_ENABLE_LOGS === "true";
+  }
   static default(message) {
-    console.log(message);
+    this.show() && console.log(message);
   }
   static black(message) {
-    console.log("\x1B[30m" /* FG_BLACK */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[30m" /* FG_BLACK */, message, "\x1B[0m" /* RESET */);
   }
   static red(message) {
-    console.log("\x1B[31m" /* FG_RED */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[31m" /* FG_RED */, message, "\x1B[0m" /* RESET */);
   }
   static green(message) {
-    console.log("\x1B[32m" /* FG_GREEN */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[32m" /* FG_GREEN */, message, "\x1B[0m" /* RESET */);
   }
   static yellow(message) {
-    console.log("\x1B[33m" /* FG_YELLOW */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[33m" /* FG_YELLOW */, message, "\x1B[0m" /* RESET */);
   }
   static blue(message) {
-    console.log("\x1B[34m" /* FG_BLUE */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[34m" /* FG_BLUE */, message, "\x1B[0m" /* RESET */);
   }
   static magenta(message) {
-    console.log("\x1B[35m" /* FG_MAGENTA */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[35m" /* FG_MAGENTA */, message, "\x1B[0m" /* RESET */);
   }
   static cyan(message) {
-    console.log("\x1B[36m" /* FG_CYAN */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[36m" /* FG_CYAN */, message, "\x1B[0m" /* RESET */);
   }
   static white(message) {
-    console.log("\x1B[37m" /* FG_WHITE */, message, "\x1B[0m" /* RESET */);
+    this.show() && console.log("\x1B[37m" /* FG_WHITE */, message, "\x1B[0m" /* RESET */);
   }
 };
 
@@ -976,6 +1018,7 @@ var PartySupplier = class {
       platformId: getRegion(this.region).regionUpper,
       puuid: this.puuid,
       registration: {
+        experiments: {},
         gameClientVersion: VersionSupplier.gameVersion,
         inventoryToken: null,
         inventoryTokens: [""],
@@ -1384,10 +1427,48 @@ function millisecondsToMinutes(milliseconds) {
   return minutes + " minutes " + seconds + " seconds";
 }
 
+// src/suppliers/party-type.supplier.ts
+var PartyTypeSupplier = class {
+  constructor(apiRequest, jwt, partyId, type, region) {
+    this.apiRequest = apiRequest;
+    this.jwt = jwt;
+    this.partyId = partyId;
+    this.type = type;
+    this.region = region;
+    this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
+    this.apiRequest = apiRequest;
+  }
+  async makeRequest({ method = "PUT" }) {
+    const response = await this.apiRequest.request({
+      url: `${this.URL}/${this.partyId}`,
+      method,
+      headers: this.headers,
+      body: this.body
+    });
+    return response;
+  }
+  get headers() {
+    const headers = {
+      Authorization: `Bearer ${this.jwt}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+    };
+    return headers;
+  }
+  get body() {
+    const body = this.type;
+    return body;
+  }
+};
+
 // src/client/VirtualClient.ts
 var VirtualClient = class {
   constructor() {
     this._apiRequest = new ApiRequest();
+  }
+  listen(callback) {
+    this._callback = callback;
   }
   async login(username, password, region = "BR" /* BR */) {
     Logger.green("Starting login process... \n");
@@ -1397,12 +1478,26 @@ var VirtualClient = class {
     this._password = password;
     this._region = region;
     try {
-      const riotClientParsedTokens = QueryTokenParser.parse(await this.getTokens("CLIENT"));
+      const riotClientParsedTokens = QueryTokenParser.parse(
+        await this.getTokens("CLIENT")
+      );
       this._riotToken = riotClientParsedTokens.access_token;
+      if (this._callback)
+        this._callback({
+          eventName: "VIRTUAL_CLIENT_RIOT_TOKEN" /* VIRTUAL_CLIENT_RIOT_TOKEN */,
+          data: this._riotToken
+        });
       Logger.cyan(`[Riot Token]: ${this._riotToken} 
 `);
-      const lolParsedTokens = QueryTokenParser.parse(await this.getTokens("LOL"));
+      const lolParsedTokens = QueryTokenParser.parse(
+        await this.getTokens("LOL")
+      );
       this._lolToken = lolParsedTokens.access_token;
+      if (this._callback)
+        this._callback({
+          eventName: "VIRTUAL_CLIENT_LOL_TOKEN" /* VIRTUAL_CLIENT_LOL_TOKEN */,
+          data: this._lolToken
+        });
       Logger.cyan(`[LoL Token]: ${this._lolToken} 
 `);
       this._userInfoToken = await this.getUserInfo();
@@ -1417,6 +1512,11 @@ var VirtualClient = class {
       await (0, import_promises.setTimeout)(1e3);
       setInterval(async () => {
         this._sessionToken = await this.getRefreshSession();
+        if (this._callback)
+          this._callback({
+            eventName: "VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */,
+            data: this._lolToken
+          });
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
       console.log(error);
@@ -1438,6 +1538,11 @@ var VirtualClient = class {
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_PARTY_TOKEN" /* VIRTUAL_CLIENT_PARTY_TOKEN */,
+        data
+      });
     return data;
   }
   async unregisterLobby() {
@@ -1449,6 +1554,10 @@ var VirtualClient = class {
       this._region
     );
     await unregisterSupplier.makeRequest({});
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_LOBBY_UNREGISTERED" /* VIRTUAL_CLIENT_LOBBY_UNREGISTERED */
+      });
     Logger.green("Lobby Unregistered \n");
   }
   async createLobby() {
@@ -1469,6 +1578,24 @@ var VirtualClient = class {
     Logger.cyan(`[Lobby ID]: ${this._partyId} 
 `);
     Logger.green("Lobby created! \n");
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_LOBBY_CREATED" /* VIRTUAL_CLIENT_LOBBY_CREATED */,
+        data: this._partyId
+      });
+  }
+  async changePartyType(type) {
+    const partyTypeSupplier = new PartyTypeSupplier(
+      this._apiRequest,
+      this._lolToken,
+      this._partyId,
+      type,
+      this._region
+    );
+    const { data } = await partyTypeSupplier.makeRequest({});
+    Logger.cyan(`[Party Type Supplier]: ${data} 
+`);
+    return data;
   }
   async selectGamemode(gamemode = 420 /* RANKED_SOLO_DUO */) {
     Logger.green("Selecting gamemode... \n");
@@ -1484,6 +1611,11 @@ var VirtualClient = class {
     Logger.yellow(`[Players Count]: ${playersCount} 
 `);
     Logger.green("Gamemode selected! \n");
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_PLAYER_COUNT" /* VIRTUAL_CLIENT_PLAYER_COUNT */,
+        data: playersCount
+      });
   }
   async selectRoles(roles = ["FILL" /* FILL */, "UNSELECTED" /* UNSELECTED */]) {
     Logger.green("Selecting roles... \n");
@@ -1497,6 +1629,10 @@ var VirtualClient = class {
     );
     const { data } = await roleSupplier.makeRequest({});
     Logger.green("Roles selected! \n");
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_ROLES_SELECTED" /* VIRTUAL_CLIENT_ROLES_SELECTED */
+      });
   }
   async startFindingMatch() {
     Logger.green("Starting to find match... \n");
@@ -1508,6 +1644,10 @@ var VirtualClient = class {
       this._region
     );
     const { data } = await startMatchSupplier.makeRequest({});
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_FINDING_MATCH" /* VIRTUAL_CLIENT_FINDING_MATCH */
+      });
     const activeRestrictions = data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
     if (activeRestrictions?.length > 0) {
       const reason = activeRestrictions[0].reason;
@@ -1516,6 +1656,14 @@ var VirtualClient = class {
       Logger.red(`Reason: ${reason} 
 `);
       Logger.red(`Time: ${millisecondsToMinutes(remainingMillis)}`);
+      if (this._callback)
+        this._callback({
+          eventName: "VIRTUAL_CLIENT_MATCH_RESTRICTED" /* VIRTUAL_CLIENT_MATCH_RESTRICTED */,
+          data: {
+            reason,
+            remainingMillis
+          }
+        });
       await progressBar(0, true, remainingMillis);
     }
     Logger.green("Finding match! \n");
@@ -1530,6 +1678,12 @@ var VirtualClient = class {
     stopSpinner(spin);
     return accepted;
   }
+  getPartyId() {
+    return this._partyId;
+  }
+  getCurrentUser() {
+    return this._userData;
+  }
   async acceptMatch(summonerSpells) {
     const startMatchSupplier = new AcceptMatchSupplier(
       this._apiRequest,
@@ -1543,6 +1697,10 @@ var VirtualClient = class {
     const { data } = await startMatchSupplier.makeRequest({});
     if (data?.payload !== void 0) {
       Logger.magenta("Match accepted! \n");
+      if (this._callback)
+        this._callback({
+          eventName: "VIRTUAL_CLIENT_MATCH_ACCEPTED" /* VIRTUAL_CLIENT_MATCH_ACCEPTED */
+        });
       return true;
     } else {
       return false;
@@ -1570,10 +1728,18 @@ var VirtualClient = class {
     return data.response.parameters.uri;
   }
   async getUserInfo() {
-    const riotClientUserInfo = new UserInfoSupplier(this._apiRequest, this._lolToken);
+    const riotClientUserInfo = new UserInfoSupplier(
+      this._apiRequest,
+      this._lolToken
+    );
     const { data } = await riotClientUserInfo.makeRequest({});
     Logger.cyan(`[User Info Token]: ${data} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_USER_INFO_TOKEN" /* VIRTUAL_CLIENT_USER_INFO_TOKEN */,
+        data
+      });
     return data;
   }
   async getInventory() {
@@ -1587,13 +1753,31 @@ var VirtualClient = class {
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_INVENTORY_TOKEN" /* VIRTUAL_CLIENT_INVENTORY_TOKEN */,
+        data: data.data.itemsJwt
+      });
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN" /* VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN */,
+        data: data.data.items.CHAMPION
+      });
     return [data.data.itemsJwt, data.data.items.CHAMPION];
   }
   async getEntitlements() {
-    const lolClientEntitlements = new EntitlementSupplier(this._apiRequest, this._riotToken);
+    const lolClientEntitlements = new EntitlementSupplier(
+      this._apiRequest,
+      this._riotToken
+    );
     const { data } = await lolClientEntitlements.makeRequest({});
     Logger.cyan(`[Entitlements Token]: ${data.entitlements_token} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN" /* VIRTUAL_CLIENT_ENTITLEMENT_TOKEN */,
+        data: data.entitlements_token
+      });
     return data.entitlements_token;
   }
   async getQueue() {
@@ -1607,6 +1791,11 @@ var VirtualClient = class {
     const { data } = await queueSupplier.makeRequest({});
     Logger.cyan(`[Queue Token]: ${data.token} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_QUEUE_TOKEN" /* VIRTUAL_CLIENT_QUEUE_TOKEN */,
+        data: data.token
+      });
     return data.token;
   }
   async getSession() {
@@ -1619,18 +1808,40 @@ var VirtualClient = class {
     const { data } = await sessionSupplier.makeRequest({});
     Logger.cyan(`[Session Token]: ${data} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */,
+        data
+      });
     return data;
   }
   async getGeopas() {
-    const geopassSupplier = new GeopasSupplier(this._apiRequest, this._lolToken);
+    const geopassSupplier = new GeopasSupplier(
+      this._apiRequest,
+      this._lolToken
+    );
     const { data } = await geopassSupplier.makeRequest({});
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_GEOPASS_TOKEN" /* VIRTUAL_CLIENT_GEOPASS_TOKEN */,
+        data
+      });
     return data;
   }
   async getSipt() {
-    const siptSupplier = new SiptSupplier(this._apiRequest, this._sessionToken, this._region);
+    const siptSupplier = new SiptSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._region
+    );
     const { data } = await siptSupplier.makeRequest({});
     Logger.cyan(`[Sipt Token]: ${data} 
 `);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_SIPT_TOKEN" /* VIRTUAL_CLIENT_SIPT_TOKEN */,
+        data
+      });
     return data;
   }
   async getUserData() {
@@ -1643,11 +1854,20 @@ var VirtualClient = class {
     const data = await userDataSupplier.makeRequest({});
     Logger.cyan(`[User Data]:
 `);
-    console.log(data);
+    Logger.default(data);
+    if (this._callback)
+      this._callback({
+        eventName: "VIRTUAL_CLIENT_USER_DATA_TOKEN" /* VIRTUAL_CLIENT_USER_DATA_TOKEN */,
+        data
+      });
     return data;
   }
   async getRefreshSession() {
-    const sessionRefreshSupplier = new SessionRefreshSupplier(this._apiRequest, this._sessionToken, this._region);
+    const sessionRefreshSupplier = new SessionRefreshSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._region
+    );
     const { data } = await sessionRefreshSupplier.makeRequest({});
     Logger.cyan(`[(REFRESH) Session Token]: ${data} 
 `);
@@ -1662,7 +1882,8 @@ var VirtualClient = class {
       queueToken: this._queueToken,
       sessionToken: this._sessionToken,
       geopasToken: this._geoPassToken,
-      siptToken: this._siptToken
+      siptToken: this._siptToken,
+      partyUserToken: this._partyUserToken
     };
   }
   userData() {
@@ -2566,6 +2787,9 @@ var RtmpPacketReader = class {
     this.decoder = new AMFDecoder();
     this.tag = null;
   }
+  listen(callback) {
+    this._callback = callback;
+  }
   handleReceivedData(data) {
     let offset = 0;
     const map = /* @__PURE__ */ new Map();
@@ -2641,23 +2865,20 @@ var RtmpPacketReader = class {
       case 9:
         break;
       case 17:
-        result = this.decoder.decode(
-          packet.getBody(),
-          new typed_object_default("Invoke")
-        );
+        result = this.decoder.decode(packet.getBody(), new typed_object_default("Invoke"));
         break;
       case 20:
-        result = this.decoder.decode(
-          packet.getBody(),
-          new typed_object_default("Connect")
-        );
+        result = this.decoder.decode(packet.getBody(), new typed_object_default("Connect"));
         break;
       default:
         console.warn(`Unhandled RTMP message type: ${messageType}`);
     }
     if (!result)
       return;
-    process.env?.LOL_HEADLESS_CLIENT_RTMP_LOGS === "true" && console.log(result);
+    if (process.env?.LOL_HEADLESS_CLIENT_RTMP_LOGS === "true") {
+      Logger.magenta("[SENT RTMP ->] \n");
+      Logger.default(result);
+    }
     this.setDsid(result);
     this.setTagFromResult(result);
     this.championSelectActions(result);
@@ -2669,6 +2890,8 @@ var RtmpPacketReader = class {
       this.client.DSId = result.getTypedObject("data").getString("id");
       Logger.magenta(`[RTMP] DSiD: ${this.client.DSId} 
 `);
+      if (this._callback)
+        this._callback({ eventName: "RTMP_DSID" /* RTMP_DSID */, data: this.client.DSId });
     }
   }
   setTagFromResult(result) {
@@ -2692,6 +2915,8 @@ var RtmpPacketReader = class {
     if (subphase === "GAME_STARTING") {
       this.client.pickState.gameStarted = true;
       Logger.green("=== Game started! ===");
+      if (this._callback)
+        this._callback({ eventName: "RTMP_GAME_STARTED" /* RTMP_GAME_STARTED */ });
       return;
     }
     this.client.pickState.isMyTurnToPick = this.isMyTurnToPickOrBan(
@@ -2728,6 +2953,11 @@ var RtmpPacketReader = class {
             this.client.pickState.bannedChampion = item.championId;
             Logger.red(`Banned champion: ${ChampionName[item.championId]}
 `);
+            if (this._callback)
+              this._callback({
+                eventName: "RTMP_BANNED_CHAMPTION" /* RTMP_BANNED_CHAMPTION */,
+                data: ChampionName[item.championId]
+              });
           }
         }
       }
@@ -2740,15 +2970,18 @@ var RtmpPacketReader = class {
       for (const item of group) {
         if (item.actorCellId === myCellId && item.type === "PICK") {
           this.client.pickState.pickActionId = item.actionId;
-          Logger.green(
-            `Pick actionID ${this.client.pickState.pickActionId} 
-`
-          );
+          Logger.green(`Pick actionID ${this.client.pickState.pickActionId} 
+`);
           if (item.completed === true) {
             this.client.pickState.isChampPicked = true;
             this.client.pickState.pickedChampion = item.championId;
             Logger.green(`Picked champion: ${ChampionName[item.championId]}
 `);
+            if (this._callback)
+              this._callback({
+                eventName: "RTMP_PICKED_CHAMPTION" /* RTMP_PICKED_CHAMPTION */,
+                data: ChampionName[item.championId]
+              });
           }
         }
       }
@@ -2762,6 +2995,8 @@ var RtmpPacketReader = class {
       if (action.actorCellId === actorCellId && action.type === type) {
         Logger.green(`Is my turn to ${type} 
 `);
+        if (this._callback)
+          this._callback({ eventName: "RTMP_MY_TURN_TO_PICK_CHAMPTION" /* RTMP_MY_TURN_TO_PICK_CHAMPTION */ });
         return true;
       }
     }
@@ -3030,6 +3265,10 @@ var RtmpClient = class {
     this.rtmpPacketReader = new RtmpPacketReader(this);
     this.DSId = null;
   }
+  listen(callback) {
+    this._callback = callback;
+    this.rtmpPacketReader.listen(this._callback);
+  }
   async connect() {
     return new Promise((resolve, reject) => {
       const socket = net.connect(this.port, this.host, () => {
@@ -3039,6 +3278,8 @@ var RtmpClient = class {
         });
         this.socket.on("secureConnect", () => {
           Logger.magenta("[RTMP] TLS connected \n");
+          if (this._callback)
+            this._callback({ eventName: "RTMP_TLS_CONNECTED" /* RTMP_TLS_CONNECTED */ });
           this.rtmpConnected = true;
           resolve();
         }).on("error", (error) => {
@@ -3058,6 +3299,8 @@ var RtmpClient = class {
       handshake.initialize(this.socket);
       handshake.once("done", () => {
         Logger.magenta("[RTMP] Handshake done \n");
+        if (this._callback)
+          this._callback({ eventName: "RTMP_HANDSHAKE_DONE" /* RTMP_HANDSHAKE_DONE */ });
         this.socket.removeAllListeners();
         resolve();
       });
@@ -3171,7 +3414,9 @@ var RtmpClient = class {
       "0"
     )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
     const data = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
-    Logger.magenta(`[RTMP] Heartbeat - ${++this.heartbeatCounter} count`);
+    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count`);
+    if (this._callback)
+      this._callback({ eventName: "RTMP_HEARTBEAT" /* RTMP_HEARTBEAT */, data: this.heartbeatCounter });
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
     } catch (e) {
@@ -3321,6 +3566,21 @@ function generateRandomDigitsForChat(length) {
   }
   return result;
 }
+var BASE_PLAYER_INFO = {
+  championId: "",
+  gameQueueType: "",
+  gameStatus: "outOfGame",
+  legendaryMasteryScore: "0",
+  level: "30",
+  mapId: "",
+  profileIcon: "907",
+  puuid: "49f9f9af-1f50-5427-a386-915b9914e8e2",
+  rankedPrevSeasonDivision: "NA",
+  rankedPrevSeasonTier: "",
+  regalia: { bannerType: 2, crestType: 1, selectedPrestigeCrest: 0 },
+  skinVariant: "",
+  skinname: ""
+};
 
 // src/services/xmpp/xmpp.client.service.ts
 var XmppClient = class {
@@ -3347,11 +3607,16 @@ var XmppClient = class {
       `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`
     ];
   }
+  listen(callback) {
+    this._callback = callback;
+  }
   connect() {
     return new Promise((resolve, reject) => {
       this.socket = tls2.connect(this.port, this.host);
       this.socket.on("secureConnect", async () => {
         Logger.yellow("[XMPP] Connected. \n");
+        if (this._callback)
+          this._callback({ eventName: "XMPP_CONNECTED" /* XMPP_CONNECTED */ });
         this.read();
         await (0, import_promises3.setTimeout)(500);
         await this.sendAuthMessages();
@@ -3368,6 +3633,8 @@ var XmppClient = class {
       }).on("end", () => {
         clearInterval(this.heartBeat);
         Logger.yellow("[XMPP] Server ended the connection");
+        if (this._callback)
+          this._callback({ eventName: "XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */ });
       });
     });
   }
@@ -3375,6 +3642,8 @@ var XmppClient = class {
     if (this.socket) {
       this.socket.end();
       Logger.yellow("[XMPP] Disconnected.");
+      if (this._callback)
+        this._callback({ eventName: "XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */ });
     }
   }
   async addFriend(username, tagline) {
@@ -3384,21 +3653,30 @@ var XmppClient = class {
       `<iq id="roster_add_1" type="set"><query xmlns="jabber:iq:riotgames:roster"><item subscription="pending_out"><id name="${username}" tagline="${tagline.toLowerCase()}"></id></item></query></iq>`
     );
   }
-  async setStatus(status) {
+  async setInfo({
+    status,
+    statusMessage = "",
+    playerInfo = BASE_PLAYER_INFO
+  }) {
+    const info = JSON.stringify(playerInfo);
     const now = Date.now();
     await this.write(
-      `<presence id='presence_1'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>{&quot;championId&quot;:&quot;&quot;,&quot;companionId&quot;:&quot;1&quot;,&quot;damageSkinId&quot;:&quot;1&quot;,&quot;gameQueueType&quot;:&quot;&quot;,&quot;gameStatus&quot;:&quot;outOfGame&quot;,&quot;iconOverride&quot;:&quot;&quot;,&quot;legendaryMasteryScore&quot;:&quot;0&quot;,&quot;level&quot;:&quot;30&quot;,&quot;mapId&quot;:&quot;&quot;,&quot;mapSkinId&quot;:&quot;1&quot;,&quot;masteryScore&quot;:&quot;2&quot;,&quot;profileIcon&quot;:&quot;907&quot;,&quot;puuid&quot;:&quot;49f9f9af-1f50-5427-a386-915b9914e8e2&quot;,&quot;rankedPrevSeasonDivision&quot;:&quot;NA&quot;,&quot;rankedPrevSeasonTier&quot;:&quot;&quot;,&quot;regalia&quot;:&quot;{&quot;bannerType&quot;:2,&quot;crestType&quot;:1,&quot;selectedPrestigeCrest&quot;:0}&quot;,&quot;skinVariant&quot;:&quot;&quot;,&quot;skinname&quot;:&quot;&quot;}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
+      `<presence id='presence_1'><show>chat</show><status>${statusMessage}</status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>${info}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
     );
   }
   async sendMessage(message, jid) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
+    await this.write(
+      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
+    );
   }
   getFriendList() {
     return this.friendList;
   }
   async fetchFriendList() {
-    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
+    await this.write(
+      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
+    );
   }
   async sendAuthMessages() {
     return new Promise(async (resolve) => {
@@ -3416,8 +3694,12 @@ var XmppClient = class {
       try {
         data = data.toString();
         Logger.yellow("[RECEIVE XMPP <-] ");
-        console.dirxml(data);
-        console.log("\n");
+        Logger.default(data + "\n");
+        if (this._callback)
+          this._callback({
+            eventName: "XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */,
+            data
+          });
         if (data.startsWith("<?xml"))
           return;
         let oldBufferedMessage = null;
@@ -3427,7 +3709,9 @@ var XmppClient = class {
           if (data === "")
             return;
           if (!data.startsWith("<"))
-            return console.log("RIOT: xml presence data doesn't start with '<'! " + data);
+            return console.log(
+              "RIOT: xml presence data doesn't start with '<'! " + data
+            );
           const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
           if (data.search(/<[^<>]+\/>/) === 0)
             data = data.replace("/>", `></${firstTagName}>`);
@@ -3443,7 +3727,10 @@ var XmppClient = class {
             nextTagIndex = data.indexOf(`<${firstTagName}`, nextTagIndex + 1);
           }
           while (containedTags > 0) {
-            closingTagIndex = data.indexOf(`</${firstTagName}>`, closingTagIndex + 1);
+            closingTagIndex = data.indexOf(
+              `</${firstTagName}>`,
+              closingTagIndex + 1
+            );
             containedTags--;
           }
           const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
@@ -3461,8 +3748,13 @@ var XmppClient = class {
     });
   }
   heartbeat() {
-    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
     this.write(" ");
+    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
+    if (this._callback)
+      this._callback({
+        eventName: "XMPP_HEARTBEAT" /* XMPP_HEARTBEAT */,
+        data: this.heartbeatCounter
+      });
   }
   async write(data) {
     return new Promise((resolve, reject) => {
@@ -3471,9 +3763,13 @@ var XmppClient = class {
           if (err) {
             reject(err);
           } else {
-            Logger.yellow("[SEND XMPP ->] ");
-            console.dirxml(data);
-            console.log("\n");
+            Logger.yellow("[SENT XMPP ->] ");
+            Logger.default(data + "\n");
+            if (this._callback)
+              this._callback({
+                eventName: "XMPP_SENT_RAW" /* XMPP_SENT_RAW */,
+                data
+              });
             resolve();
           }
         });
@@ -3494,7 +3790,6 @@ var XmppClient = class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleParsedXml(jsonObj) {
     if (jsonObj.hasOwnProperty("iq")) {
-      console.log("----------------------");
       if (!jsonObj.iq?.query?.length) {
         return;
       }
@@ -3502,17 +3797,21 @@ var XmppClient = class {
       if (xmlns === "jabber:iq:privacy") {
       }
       if (xmlns === "jabber:iq:riotgames:roster") {
-        this.handleFriendList(jsonObj.iq?.query[0]?.item);
+        this.handleFriendList(jsonObj.iq?.query[0]?.item ?? []);
       }
-      console.log("----------------------");
     }
     if (jsonObj.hasOwnProperty("message")) {
       const { id, from, to, stamp, type } = jsonObj.message.$;
       const message = jsonObj.message.body[0];
-      console.log({ id, from, to, stamp, type, message });
-      console.log("----------------------");
+      Logger.default({ id, from, to, stamp, type, message });
+      if (this._callback)
+        this._callback({
+          eventName: "XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */,
+          data: { id, from, to, stamp, type, message }
+        });
     }
     if (jsonObj.hasOwnProperty("presence")) {
+      this.handlePresense(jsonObj.presence);
     }
   }
   handleFriendList(players) {
@@ -3523,7 +3822,29 @@ var XmppClient = class {
       const lastOnline = player.last_online[0];
       const internalName = player.id[0].$.name;
       const tagline = player.id[0].$.tagline;
-      this.friendList.push({ jid, puuid, name, state, lastOnline, internalName, tagline });
+      this.friendList.push({
+        jid,
+        puuid,
+        name,
+        state,
+        lastOnline,
+        internalName,
+        tagline
+      });
+    }
+    console.log(this.friendList);
+  }
+  handlePresense(presence) {
+    try {
+      const from = presence.$.from;
+      const chatShow = presence.show[0];
+      const chatStatus = presence.status[0];
+      const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
+      Logger.default({ from });
+      Logger.default({ chatShow });
+      Logger.default({ chatStatus });
+      Logger.default(profileInfo);
+    } catch (error) {
     }
   }
 };
@@ -3534,19 +3855,48 @@ var HeadlessClient = class {
   constructor({ region }) {
     this.region = region;
   }
-  async login({ username, password }) {
-    this.virtualClient = await this.setupVirtualClient(username, password, this.region);
+  listen(callback) {
+    this.callback = callback;
+  }
+  async login({
+    username,
+    password
+  }) {
+    this.virtualClient = await this.setupVirtualClient(
+      username,
+      password,
+      this.region
+    );
     this.rtmpClient = await this.setupRtmp(this.virtualClient, username);
     this.xmppClient = await this.setupXmpp(this.virtualClient);
   }
-  async addFriend({ username, tagline }) {
+  getAllTokens() {
+    return this.virtualClient.getAllTokens();
+  }
+  getPartyId() {
+    return this.virtualClient.getPartyId();
+  }
+  getCurrentUser() {
+    return this.virtualClient.getCurrentUser();
+  }
+  async changePartyType(type) {
+    return await this.virtualClient.changePartyType(type);
+  }
+  async addFriend({
+    username,
+    tagline
+  }) {
     await this.xmppClient.addFriend(username, tagline);
   }
   async sendMessage({ message, jid }) {
     await this.xmppClient.sendMessage(message, jid);
   }
-  async setStatus({ status }) {
-    await this.xmppClient.setStatus(status);
+  async setInfo({
+    status,
+    statusMessage,
+    playerInfo
+  }) {
+    await this.xmppClient.setInfo({ status, playerInfo, statusMessage });
   }
   getPlayerChampions() {
     return this.virtualClient.getPlayerChampions();
@@ -3564,7 +3914,9 @@ var HeadlessClient = class {
   async selectRoles({ roles }) {
     await this.virtualClient.selectRoles(roles);
   }
-  async findMatch({ summonerSpells }) {
+  async findMatch({
+    summonerSpells
+  }) {
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop(summonerSpells);
   }
@@ -3580,6 +3932,8 @@ var HeadlessClient = class {
   }
   async setupVirtualClient(username, password, region) {
     this.virtualClient = new VirtualClient();
+    if (this.callback)
+      this.virtualClient.listen(this.callback);
     await this.virtualClient.login(username, password, region);
     return this.virtualClient;
   }
@@ -3587,7 +3941,15 @@ var HeadlessClient = class {
     const tokens = virtualClient.getAllTokens();
     const userData = virtualClient.userData();
     const { rtmpHost, rtmpPort } = getRegion(this.region);
-    this.rtmpClient = new RtmpClient(rtmpHost, rtmpPort, tokens, userData, username);
+    this.rtmpClient = new RtmpClient(
+      rtmpHost,
+      rtmpPort,
+      tokens,
+      userData,
+      username
+    );
+    if (this.callback)
+      this.rtmpClient.listen(this.callback);
     await this.rtmpClient.connect();
     await this.rtmpClient.handshake();
     await this.rtmpClient.startListening();
@@ -3598,7 +3960,14 @@ var HeadlessClient = class {
   }
   async setupXmpp(virtualClient) {
     const { lolToken, geopasToken, entitlementsToken } = virtualClient.getAllTokens();
-    this.xmppClient = new XmppClient(lolToken, geopasToken, entitlementsToken, this.region);
+    this.xmppClient = new XmppClient(
+      lolToken,
+      geopasToken,
+      entitlementsToken,
+      this.region
+    );
+    if (this.callback)
+      this.xmppClient.listen(this.callback);
     await this.xmppClient.connect();
     return this.xmppClient;
   }
@@ -3606,6 +3975,7 @@ var HeadlessClient = class {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Champion,
+  EventCallbackName,
   Gamemode,
   HeadlessClient,
   Region,
