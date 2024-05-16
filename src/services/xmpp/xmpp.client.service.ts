@@ -2,13 +2,54 @@ import * as tls from "tls";
 import { Logger } from "../../utils/logger.util";
 import { setTimeout as sleep } from "timers/promises";
 import { parseString } from "xml2js";
-import { generateRandomDigitsForChat } from "./xmpp.utils";
+import { BASE_PLAYER_INFO, generateRandomDigitsForChat } from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
 import { getRegion } from "../../config/regions";
 import { CallbackEvent } from "../../main";
 import { EventCallbackName } from "../../enums/event-callback-name.enum";
 
 export type PlayerStatus = "online" | "offline" | "away";
+
+export type PlayerInfo = {
+  bannerIdSelected?: string;
+  challengeCrystalLevel?: string;
+  challengePoints?: string;
+  challengeTokensSelected?: string;
+  championId: string;
+  companionId?: string;
+  damageSkinId?: string;
+  gameMode?: string;
+  gameQueueType: string;
+  gameStatus: string;
+  iconOverride?: string;
+  isObservable?: string;
+  legendaryMasteryScore: string;
+  level: string;
+  mapId: string;
+  mapSkinId?: string;
+  masteryScore?: string;
+  playerTitleSelected?: string;
+  profileIcon: string;
+  pty?:
+    | {
+        maxPlayers: number;
+        partyId: string;
+        queueId: number;
+        summoners: number[];
+      }
+    | string;
+  puuid?: string;
+  queueId?: string;
+  rankedPrevSeasonDivision?: string;
+  rankedPrevSeasonTier?: string;
+  regalia: {
+    bannerType: number;
+    crestType: number;
+    selectedPrestigeCrest: number;
+  };
+  skinVariant: string;
+  skinname: string;
+};
 export type Friend = {
   jid: string;
   puuid: string;
@@ -61,7 +102,8 @@ export class XmppClient {
       this.socket
         .on("secureConnect", async () => {
           Logger.yellow("[XMPP] Connected. \n");
-          if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_CONNECTED });
+          if (this._callback)
+            this._callback({ eventName: EventCallbackName.XMPP_CONNECTED });
           this.read();
           await sleep(500);
           await this.sendAuthMessages();
@@ -80,7 +122,8 @@ export class XmppClient {
         .on("end", () => {
           clearInterval(this.heartBeat);
           Logger.yellow("[XMPP] Server ended the connection");
-          if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
+          if (this._callback)
+            this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
         });
     });
   }
@@ -89,7 +132,8 @@ export class XmppClient {
     if (this.socket) {
       this.socket.end();
       Logger.yellow("[XMPP] Disconnected.");
-      if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
+      if (this._callback)
+        this._callback({ eventName: EventCallbackName.XMPP_DISCONNECTED });
     }
   }
 
@@ -100,16 +144,27 @@ export class XmppClient {
     );
   }
 
-  public async setStatus(status: ChatStatus) {
+  public async setInfo({
+    status,
+    statusMessage = "",
+    playerInfo = BASE_PLAYER_INFO,
+  }: {
+    status: ChatStatus;
+    statusMessage?: string;
+    playerInfo?: PlayerInfo;
+  }) {
+    const info = JSON.stringify(playerInfo);
     const now = Date.now();
     await this.write(
-      `<presence id='presence_1'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>{&quot;championId&quot;:&quot;&quot;,&quot;companionId&quot;:&quot;1&quot;,&quot;damageSkinId&quot;:&quot;1&quot;,&quot;gameQueueType&quot;:&quot;&quot;,&quot;gameStatus&quot;:&quot;outOfGame&quot;,&quot;iconOverride&quot;:&quot;&quot;,&quot;legendaryMasteryScore&quot;:&quot;0&quot;,&quot;level&quot;:&quot;30&quot;,&quot;mapId&quot;:&quot;&quot;,&quot;mapSkinId&quot;:&quot;1&quot;,&quot;masteryScore&quot;:&quot;2&quot;,&quot;profileIcon&quot;:&quot;907&quot;,&quot;puuid&quot;:&quot;49f9f9af-1f50-5427-a386-915b9914e8e2&quot;,&quot;rankedPrevSeasonDivision&quot;:&quot;NA&quot;,&quot;rankedPrevSeasonTier&quot;:&quot;&quot;,&quot;regalia&quot;:&quot;{\&quot;bannerType\&quot;:2,\&quot;crestType\&quot;:1,\&quot;selectedPrestigeCrest\&quot;:0}&quot;,&quot;skinVariant&quot;:&quot;&quot;,&quot;skinname&quot;:&quot;&quot;}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
+      `<presence id='presence_1'><show>chat</show><status>${statusMessage}</status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>${info}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
     );
   }
 
   public async sendMessage(message: string, jid: string) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
+    await this.write(
+      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
+    );
   }
 
   public getFriendList() {
@@ -117,7 +172,9 @@ export class XmppClient {
   }
 
   private async fetchFriendList() {
-    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
+    await this.write(
+      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
+    );
   }
 
   private async sendAuthMessages(): Promise<void> {
@@ -138,21 +195,31 @@ export class XmppClient {
         data = data.toString();
         Logger.yellow("[RECEIVE XMPP <-] ");
         Logger.default(data + "\n");
-        if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_RECEIVED_RAW, data });
+        if (this._callback)
+          this._callback({
+            eventName: EventCallbackName.XMPP_RECEIVED_RAW,
+            data,
+          });
 
         // handle riot splitting messages into multiple parts
         if (data.startsWith("<?xml")) return;
-        let oldBufferedMessage = null;
+        let oldBufferedMessage: string | null = null;
         while (oldBufferedMessage !== bufferedMessage) {
           oldBufferedMessage = bufferedMessage;
           data = bufferedMessage + data;
           if (data === "") return;
-          if (!data.startsWith("<")) return console.log("RIOT: xml presence data doesn't start with '<'! " + data);
+          if (!data.startsWith("<"))
+            return console.log(
+              "RIOT: xml presence data doesn't start with '<'! " + data
+            );
 
-          const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
+          const firstTagName = data
+            .substring(1, data.indexOf(">"))
+            .split(" ", 1)[0];
 
           // check for self closing tag eg <presence />
-          if (data.search(/<[^<>]+\/>/) === 0) data = data.replace("/>", `></${firstTagName}>`);
+          if (data.search(/<[^<>]+\/>/) === 0)
+            data = data.replace("/>", `></${firstTagName}>`);
 
           let closingTagIndex = data.indexOf(`</${firstTagName}>`);
           if (closingTagIndex === -1) {
@@ -171,7 +238,10 @@ export class XmppClient {
           }
 
           while (containedTags > 0) {
-            closingTagIndex = data.indexOf(`</${firstTagName}>`, closingTagIndex + 1);
+            closingTagIndex = data.indexOf(
+              `</${firstTagName}>`,
+              closingTagIndex + 1
+            );
             containedTags--;
           }
 
@@ -196,7 +266,11 @@ export class XmppClient {
   private heartbeat(): void {
     this.write(" ");
     Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_HEARTBEAT, data: this.heartbeatCounter });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.XMPP_HEARTBEAT,
+        data: this.heartbeatCounter,
+      });
   }
 
   private async write(data: string): Promise<void> {
@@ -208,7 +282,11 @@ export class XmppClient {
           } else {
             Logger.yellow("[SENT XMPP ->] ");
             Logger.default(data + "\n");
-            if (this._callback) this._callback({ eventName: EventCallbackName.XMPP_SENT_RAW, data });
+            if (this._callback)
+              this._callback({
+                eventName: EventCallbackName.XMPP_SENT_RAW,
+                data,
+              });
             resolve();
           }
         });
@@ -253,16 +331,7 @@ export class XmppClient {
         });
     }
     if (jsonObj.hasOwnProperty("presence")) {
-      // console.log(jsonObj.presence?.games[0]?.league_of_legends[0]);
-      // const from = jsonObj.presence.$.from;
-      // const chatShow = jsonObj.presence.show[0];
-      // const chatStatus = jsonObj.presence.status[0];
-      // const profileInfo = jsonObj.presence?.games[0]?.league_of_legends[0]?.p[0];
       this.handlePresense(jsonObj.presence);
-      // Logger.default({ from });
-      // Logger.default({ chatShow });
-      // Logger.default({ chatStatus });
-      // Logger.default(profileInfo);
     }
   }
 
@@ -275,7 +344,15 @@ export class XmppClient {
       const lastOnline = player.last_online[0];
       const internalName = player.id[0].$.name;
       const tagline = player.id[0].$.tagline;
-      this.friendList.push({ jid, puuid, name, state, lastOnline, internalName, tagline });
+      this.friendList.push({
+        jid,
+        puuid,
+        name,
+        state,
+        lastOnline,
+        internalName,
+        tagline,
+      });
     }
 
     console.log(this.friendList);

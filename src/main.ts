@@ -1,15 +1,20 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { VirtualClient } from "./client/VirtualClient";
+import { PublicTokens, VirtualClient } from "./client/VirtualClient";
 import { Gamemode } from "./enums/gamemode.enum";
 import { Role } from "./enums/role.enum";
 import { RtmpClient } from "./services/rtmp/rtmp-client.service";
 import { SummonerSpell } from "./enums/summoner-spell.enum";
 import { Champion } from "./enums/champion.enum";
-import { ChatStatus, XmppClient } from "./services/xmpp/xmpp.client.service";
+import {
+  ChatStatus,
+  PlayerInfo,
+  XmppClient,
+} from "./services/xmpp/xmpp.client.service";
 import { Region } from "./enums/region.enum";
 import { getRegion } from "./config/regions";
 import { EventCallbackName } from "./enums/event-callback-name.enum";
+import { UserData } from "./suppliers/user-data.supplier";
 
 export type CallbackEvent = {
   eventName: EventCallbackName;
@@ -24,8 +29,6 @@ export class HeadlessClient {
   private callback: (data: CallbackEvent) => void;
 
   constructor({ region }: { region: Region }) {
-    console.log(process.env)
-    return;
     this.region = region;
   }
 
@@ -33,8 +36,18 @@ export class HeadlessClient {
     this.callback = callback;
   }
 
-  public async login({ username, password }: { username: string; password: string }) {
-    this.virtualClient = await this.setupVirtualClient(username, password, this.region);
+  public async login({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) {
+    this.virtualClient = await this.setupVirtualClient(
+      username,
+      password,
+      this.region
+    );
     this.rtmpClient = await this.setupRtmp(this.virtualClient, username);
     this.xmppClient = await this.setupXmpp(this.virtualClient);
     /*
@@ -48,7 +61,29 @@ export class HeadlessClient {
     */
   }
 
-  public async addFriend({ username, tagline }: { username: string; tagline: string }) {
+  public getAllTokens(): PublicTokens {
+    return this.virtualClient.getAllTokens();
+  }
+
+  public getPartyId(): string {
+    return this.virtualClient.getPartyId();
+  }
+
+  public getCurrentUser(): UserData {
+    return this.virtualClient.getCurrentUser();
+  }
+
+  public async changePartyType(type: "open" | "closed") {
+    return await this.virtualClient.changePartyType(type);
+  }
+
+  public async addFriend({
+    username,
+    tagline,
+  }: {
+    username: string;
+    tagline: string;
+  }) {
     await this.xmppClient.addFriend(username, tagline);
   }
 
@@ -56,8 +91,16 @@ export class HeadlessClient {
     await this.xmppClient.sendMessage(message, jid);
   }
 
-  public async setStatus({ status }: { status: ChatStatus }) {
-    await this.xmppClient.setStatus(status);
+  public async setInfo({
+    status,
+    statusMessage,
+    playerInfo,
+  }: {
+    status: ChatStatus;
+    statusMessage?: string;
+    playerInfo?: PlayerInfo;
+  }) {
+    await this.xmppClient.setInfo({ status, playerInfo, statusMessage });
   }
 
   public getPlayerChampions() {
@@ -81,7 +124,11 @@ export class HeadlessClient {
     await this.virtualClient.selectRoles(roles);
   }
 
-  public async findMatch({ summonerSpells }: { summonerSpells?: SummonerSpell[] }) {
+  public async findMatch({
+    summonerSpells,
+  }: {
+    summonerSpells: SummonerSpell[];
+  }) {
     await this.virtualClient.startFindingMatch();
     await this.virtualClient.acceptMatchLoop(summonerSpells);
   }
@@ -99,7 +146,11 @@ export class HeadlessClient {
     await this.xmppClient.disconnect();
   }
 
-  private async setupVirtualClient(username: string, password: string, region: Region): Promise<VirtualClient> {
+  private async setupVirtualClient(
+    username: string,
+    password: string,
+    region: Region
+  ): Promise<VirtualClient> {
     this.virtualClient = new VirtualClient();
 
     if (this.callback) this.virtualClient.listen(this.callback);
@@ -108,12 +159,21 @@ export class HeadlessClient {
     return this.virtualClient;
   }
 
-  private async setupRtmp(virtualClient: VirtualClient, username: string): Promise<RtmpClient> {
+  private async setupRtmp(
+    virtualClient: VirtualClient,
+    username: string
+  ): Promise<RtmpClient> {
     const tokens = virtualClient.getAllTokens();
     const userData = virtualClient.userData();
     const { rtmpHost, rtmpPort } = getRegion(this.region);
 
-    this.rtmpClient = new RtmpClient(rtmpHost, rtmpPort, tokens, userData, username);
+    this.rtmpClient = new RtmpClient(
+      rtmpHost,
+      rtmpPort,
+      tokens,
+      userData,
+      username
+    );
 
     if (this.callback) this.rtmpClient.listen(this.callback);
 
@@ -127,9 +187,15 @@ export class HeadlessClient {
   }
 
   private async setupXmpp(virtualClient: VirtualClient): Promise<XmppClient> {
-    const { lolToken, geopasToken, entitlementsToken } = virtualClient.getAllTokens();
+    const { lolToken, geopasToken, entitlementsToken } =
+      virtualClient.getAllTokens();
 
-    this.xmppClient = new XmppClient(lolToken, geopasToken, entitlementsToken, this.region);
+    this.xmppClient = new XmppClient(
+      lolToken,
+      geopasToken,
+      entitlementsToken,
+      this.region
+    );
 
     if (this.callback) this.xmppClient.listen(this.callback);
 

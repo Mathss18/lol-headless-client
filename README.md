@@ -57,20 +57,22 @@ import { Champion, Gamemode, Region, Role, HeadlessClient } from "lol-headless-c
 
 const hc = new HeadlessClient({ region: Region.BR });
 
-const callback = ({ eventName, data }: CallbackEvent) => console.log({ eventName, data });
+const callback = ({ eventName, data }: CallbackEvent) => console.log({ eventName, data }); // you will be notified for each event: see EventCallbackName
 
 const main = async () => {
-  hc.listen(callback); // Add callback function to HC events 
+  hc.listen(callback); // Add callback function to lister HC events 
 
   await hc.login({ username: "YOUR-USERNAME", password: "YOUR-PASSWORD" }); // Login
 
   await hc.addFriend({ username: "FRIEND-USERNAME", tagline: "FRIEND-TAGLINE" }); // Add New Friend
 
-  await hc.setStatus({ status: "chat" }); // Set status to online "chat"
+  await hc.setInfo({ status: "chat" }); // Set status to online "chat"
 
   await hc.sendMessage({ message: "Hi", jid: "FRIEND-JID" }); // Send a message to a friend
 
   await hc.createLobby(); // Create a new Lobby
+
+  await hc.changePartyType("open"); // Set lobby to open
 
   await hc.selectGamemode({ gamemode: Gamemode.RANKED_SOLO_DUO }); // Select RANKED_SOLO_DUO gamemode
 

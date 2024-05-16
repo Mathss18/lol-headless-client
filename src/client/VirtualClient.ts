@@ -31,6 +31,7 @@ import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 import { EventCallbackName } from "../enums/event-callback-name.enum";
 import { CallbackEvent } from "../main";
+import { PartyTypeSupplier } from "../suppliers/party-type.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -50,6 +51,7 @@ export class VirtualClient {
   private _playerChampions: Champion[];
   private _partyUserToken: string;
   private _region: Region;
+  private _partyType: string | undefined;
   private _callback: (data: CallbackEvent) => void;
 
   constructor() {
@@ -60,7 +62,11 @@ export class VirtualClient {
     this._callback = callback;
   }
 
-  public async login(username: string, password: string, region: Region = Region.BR) {
+  public async login(
+    username: string,
+    password: string,
+    region: Region = Region.BR
+  ) {
     Logger.green("Starting login process... \n");
     Logger.green(`Selected Region: ${getRegion(region).name} \n`);
     this._username = username;
@@ -68,16 +74,26 @@ export class VirtualClient {
     this._region = region;
 
     try {
-      const riotClientParsedTokens = QueryTokenParser.parse(await this.getTokens("CLIENT"));
+      const riotClientParsedTokens = QueryTokenParser.parse(
+        await this.getTokens("CLIENT")
+      );
       this._riotToken = riotClientParsedTokens.access_token;
       if (this._callback)
-        this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_RIOT_TOKEN, data: this._riotToken });
+        this._callback({
+          eventName: EventCallbackName.VIRTUAL_CLIENT_RIOT_TOKEN,
+          data: this._riotToken,
+        });
       Logger.cyan(`[Riot Token]: ${this._riotToken} \n`);
 
-      const lolParsedTokens = QueryTokenParser.parse(await this.getTokens("LOL"));
+      const lolParsedTokens = QueryTokenParser.parse(
+        await this.getTokens("LOL")
+      );
       this._lolToken = lolParsedTokens.access_token;
       if (this._callback)
-        this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_LOL_TOKEN, data: this._lolToken });
+        this._callback({
+          eventName: EventCallbackName.VIRTUAL_CLIENT_LOL_TOKEN,
+          data: this._lolToken,
+        });
       Logger.cyan(`[LoL Token]: ${this._lolToken} \n`);
 
       this._userInfoToken = await this.getUserInfo();
@@ -103,7 +119,10 @@ export class VirtualClient {
       setInterval(async () => {
         this._sessionToken = await this.getRefreshSession();
         if (this._callback)
-          this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_SESSION_TOKEN, data: this._lolToken });
+          this._callback({
+            eventName: EventCallbackName.VIRTUAL_CLIENT_SESSION_TOKEN,
+            data: this._lolToken,
+          });
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
       console.log(error);
@@ -126,7 +145,11 @@ export class VirtualClient {
     );
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} \n`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_PARTY_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_PARTY_TOKEN,
+        data,
+      });
     return data;
   }
 
@@ -139,7 +162,10 @@ export class VirtualClient {
       this._region
     );
     await unregisterSupplier.makeRequest({});
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_LOBBY_UNREGISTERED });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_LOBBY_UNREGISTERED,
+      });
     Logger.green("Lobby Unregistered \n");
   }
 
@@ -162,7 +188,28 @@ export class VirtualClient {
     Logger.cyan(`[Lobby ID]: ${this._partyId} \n`);
     Logger.green("Lobby created! \n");
     if (this._callback)
-      this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_LOBBY_CREATED, data: this._partyId });
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_LOBBY_CREATED,
+        data: this._partyId,
+      });
+  }
+
+  public async changePartyType(type: "open" | "closed") {
+    const partyTypeSupplier = new PartyTypeSupplier(
+      this._apiRequest,
+      this._lolToken,
+      this._partyId,
+      type,
+      this._region
+    );
+    const { data } = await partyTypeSupplier.makeRequest({});
+    Logger.cyan(`[Party Type Supplier]: ${data} \n`);
+    // if (this._callback)
+    //   this._callback({
+    //     eventName: EventCallbackName.VIRTUAL_CLIENT_USER_INFO_TOKEN,
+    //     data,
+    //   });
+    return data;
   }
 
   public async selectGamemode(gamemode: Gamemode = Gamemode.RANKED_SOLO_DUO) {
@@ -180,7 +227,10 @@ export class VirtualClient {
     Logger.yellow(`[Players Count]: ${playersCount} \n`);
     Logger.green("Gamemode selected! \n");
     if (this._callback)
-      this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_PLAYER_COUNT, data: playersCount });
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_PLAYER_COUNT,
+        data: playersCount,
+      });
   }
 
   public async selectRoles(roles: Role[] = [Role.FILL, Role.UNSELECTED]) {
@@ -197,7 +247,10 @@ export class VirtualClient {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data } = await roleSupplier.makeRequest({});
     Logger.green("Roles selected! \n");
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_ROLES_SELECTED });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_ROLES_SELECTED,
+      });
   }
 
   public async startFindingMatch() {
@@ -211,8 +264,12 @@ export class VirtualClient {
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_FINDING_MATCH });
-    const activeRestrictions = data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_FINDING_MATCH,
+      });
+    const activeRestrictions =
+      data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
     if (activeRestrictions?.length > 0) {
       const reason = activeRestrictions[0].reason;
       const remainingMillis = activeRestrictions[0].remainingMillis;
@@ -233,7 +290,9 @@ export class VirtualClient {
     Logger.green("Finding match! \n");
   }
 
-  public async acceptMatchLoop(summonerSpells: SummonerSpell[]): Promise<boolean> {
+  public async acceptMatchLoop(
+    summonerSpells: SummonerSpell[]
+  ): Promise<boolean> {
     const spin = startSpinner("Searching for a match...");
     let accepted = false;
     while (!accepted) {
@@ -242,6 +301,14 @@ export class VirtualClient {
     }
     stopSpinner(spin);
     return accepted;
+  }
+
+  public getPartyId() {
+    return this._partyId;
+  }
+
+  public getCurrentUser() {
+    return this._userData;
   }
 
   private async acceptMatch(summonerSpells: SummonerSpell[]): Promise<boolean> {
@@ -258,7 +325,10 @@ export class VirtualClient {
     const { data } = await startMatchSupplier.makeRequest({});
     if (data?.payload !== undefined) {
       Logger.magenta("Match accepted! \n");
-      if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_MATCH_ACCEPTED });
+      if (this._callback)
+        this._callback({
+          eventName: EventCallbackName.VIRTUAL_CLIENT_MATCH_ACCEPTED,
+        });
       return true;
     } else {
       return false;
@@ -271,10 +341,10 @@ export class VirtualClient {
 
     const { headers: h1 } = await cookieSupplier.makeRequest({});
 
-    cookieSupplier.additionalCookie = cookieSupplier.getCfbm(h1["set-cookie"]);
+    cookieSupplier.additionalCookie = cookieSupplier.getCfbm(h1["set-cookie"]!);
     const { headers: h2 } = await cookieSupplier.makeRequest({});
 
-    cookieSupplier.additionalCookie = cookieSupplier.build(h2["set-cookie"]);
+    cookieSupplier.additionalCookie = cookieSupplier.build(h2["set-cookie"]!);
     const body = JSON.stringify({
       username: this._username,
       password: this._password,
@@ -292,10 +362,17 @@ export class VirtualClient {
   }
 
   private async getUserInfo(): Promise<string> {
-    const riotClientUserInfo = new UserInfoSupplier(this._apiRequest, this._lolToken);
+    const riotClientUserInfo = new UserInfoSupplier(
+      this._apiRequest,
+      this._lolToken
+    );
     const { data } = await riotClientUserInfo.makeRequest({});
     Logger.cyan(`[User Info Token]: ${data} \n`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_USER_INFO_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_USER_INFO_TOKEN,
+        data,
+      });
     return data;
   }
 
@@ -310,7 +387,10 @@ export class VirtualClient {
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} \n`);
     if (this._callback)
-      this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_INVENTORY_TOKEN, data: data.data.itemsJwt });
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_INVENTORY_TOKEN,
+        data: data.data.itemsJwt,
+      });
     if (this._callback)
       this._callback({
         eventName: EventCallbackName.VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN,
@@ -320,11 +400,17 @@ export class VirtualClient {
   }
 
   private async getEntitlements() {
-    const lolClientEntitlements = new EntitlementSupplier(this._apiRequest, this._riotToken);
+    const lolClientEntitlements = new EntitlementSupplier(
+      this._apiRequest,
+      this._riotToken
+    );
     const { data } = await lolClientEntitlements.makeRequest({});
     Logger.cyan(`[Entitlements Token]: ${data.entitlements_token} \n`);
     if (this._callback)
-      this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_ENTITLEMENT_TOKEN, data: data.entitlements_token });
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_ENTITLEMENT_TOKEN,
+        data: data.entitlements_token,
+      });
     return data.entitlements_token;
   }
 
@@ -339,7 +425,11 @@ export class VirtualClient {
 
     const { data } = await queueSupplier.makeRequest({});
     Logger.cyan(`[Queue Token]: ${data.token} \n`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_QUEUE_TOKEN, data: data.token });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_QUEUE_TOKEN,
+        data: data.token,
+      });
     return data.token;
   }
 
@@ -352,22 +442,41 @@ export class VirtualClient {
     );
     const { data } = await sessionSupplier.makeRequest({});
     Logger.cyan(`[Session Token]: ${data} \n`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_SESSION_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_SESSION_TOKEN,
+        data,
+      });
     return data;
   }
 
   private async getGeopas() {
-    const geopassSupplier = new GeopasSupplier(this._apiRequest, this._lolToken);
+    const geopassSupplier = new GeopasSupplier(
+      this._apiRequest,
+      this._lolToken
+    );
     const { data } = await geopassSupplier.makeRequest({});
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_GEOPASS_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_GEOPASS_TOKEN,
+        data,
+      });
     return data;
   }
 
   private async getSipt() {
-    const siptSupplier = new SiptSupplier(this._apiRequest, this._sessionToken, this._region);
+    const siptSupplier = new SiptSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._region
+    );
     const { data } = await siptSupplier.makeRequest({});
     Logger.cyan(`[Sipt Token]: ${data} \n`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_SIPT_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_SIPT_TOKEN,
+        data,
+      });
     return data;
   }
 
@@ -381,12 +490,20 @@ export class VirtualClient {
     const data = await userDataSupplier.makeRequest({});
     Logger.cyan(`[User Data]:\n`);
     Logger.default(data);
-    if (this._callback) this._callback({ eventName: EventCallbackName.VIRTUAL_CLIENT_USER_DATA_TOKEN, data });
+    if (this._callback)
+      this._callback({
+        eventName: EventCallbackName.VIRTUAL_CLIENT_USER_DATA_TOKEN,
+        data,
+      });
     return data;
   }
 
   private async getRefreshSession() {
-    const sessionRefreshSupplier = new SessionRefreshSupplier(this._apiRequest, this._sessionToken, this._region);
+    const sessionRefreshSupplier = new SessionRefreshSupplier(
+      this._apiRequest,
+      this._sessionToken,
+      this._region
+    );
     const { data } = await sessionRefreshSupplier.makeRequest({});
     Logger.cyan(`[(REFRESH) Session Token]: ${data} \n`);
     return data;
@@ -402,6 +519,7 @@ export class VirtualClient {
       sessionToken: this._sessionToken,
       geopasToken: this._geoPassToken,
       siptToken: this._siptToken,
+      partyUserToken: this._partyUserToken,
     };
   }
 
@@ -419,4 +537,5 @@ export interface PublicTokens {
   sessionToken: string;
   geopasToken: string;
   siptToken: string;
+  partyUserToken: string;
 }

@@ -5,7 +5,9 @@ import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
 export class PartySupplier {
-  readonly URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/players`;
+  readonly URL = `${
+    getRegion(this.region).leagueEdgeUrl
+  }/parties-ledge/v1/players`;
 
   constructor(
     private apiRequest: ApiRequest,
@@ -52,6 +54,7 @@ export class PartySupplier {
       platformId: getRegion(this.region).regionUpper,
       puuid: this.puuid,
       registration: {
+        experiments: {},
         gameClientVersion: VersionSupplier.gameVersion,
         inventoryToken: null,
         inventoryTokens: [""],

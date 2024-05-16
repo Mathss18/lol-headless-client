@@ -11,7 +11,7 @@ const main = async () => {
 
   await hc.addFriend({ username: "FRIEND-USERNAME", tagline: "FRIEND-TAGLINE" });
 
-  await hc.setStatus({ status: "chat" });
+  await hc.setInfo({ status: "chat" });
 
   await hc.sendMessage({ message: "Hi", jid: "FRIEND-JID" });
 
