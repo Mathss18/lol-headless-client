@@ -1008,8 +1008,9 @@ var UserDataSupplier = class {
     this.jwt = jwt;
     this.puuid = puuid;
     this.region = region;
-    this.URL = `${getRegion(this.region).leagueEdgeUrl}/summoner-ledge/v1/regions/${getRegion(this.region).regionUpper}/summoners/puuid`;
+    this.URL = ``;
     this.apiRequest = apiRequest;
+    this.URL = `${getRegion(this.region).leagueEdgeUrl}/summoner-ledge/v1/regions/${getRegion(this.region).regionUpper}/summoners/puuid`;
   }
   async makeRequest({ method = "GET" }) {
     const response = await this.apiRequest.request({

@@ -20,12 +20,20 @@ export interface UserData {
   iat: number;
 }
 export class UserDataSupplier {
-  readonly URL = `${getRegion(this.region).leagueEdgeUrl}/summoner-ledge/v1/regions/${
-    getRegion(this.region).regionUpper
-  }/summoners/puuid`;
+  private URL = ``;
 
-  constructor(private apiRequest: ApiRequest, private jwt: string, private puuid: string, private region: Region) {
+  constructor(
+    private apiRequest: ApiRequest,
+    private jwt: string,
+    private puuid: string,
+    private region: Region
+  ) {
     this.apiRequest = apiRequest;
+    this.URL = `${
+      getRegion(this.region).leagueEdgeUrl
+    }/summoner-ledge/v1/regions/${
+      getRegion(this.region).regionUpper
+    }/summoners/puuid`;
   }
 
   public async makeRequest({ method = "GET" }): Promise<UserData> {
@@ -35,7 +43,9 @@ export class UserDataSupplier {
       headers: this.headers,
     });
     const tokenParts = response.data.split(".");
-    const decodedPayload = Buffer.from(tokenParts[1], "base64").toString("utf8");
+    const decodedPayload = Buffer.from(tokenParts[1], "base64").toString(
+      "utf8"
+    );
     const payload = JSON.parse(decodedPayload);
     return payload;
   }
