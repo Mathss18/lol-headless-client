@@ -400,6 +400,7 @@ export class XmppClient {
     const chatHistory: Message[] = [];
     const myJid = removeRcPart(conversation.$.from);
     const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
+    this.callCallback(EventCallbackName.XMPP_MY_JID_UPDATE, myJid);
     if (!conversation?.message?.length) {
       Logger.default({ chatHistory });
       this.callCallback(EventCallbackName.XMPP_CHAT_HISTORY_UPDATED, {
