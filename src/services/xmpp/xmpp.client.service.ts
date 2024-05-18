@@ -321,7 +321,7 @@ export class XmppClient {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleParsedXml(jsonObj: any): void {
     if (jsonObj.hasOwnProperty("iq")) {
-      const xmlns = jsonObj?.iq?.query[0]?.$?.xmlns ?? null;
+      const xmlns = jsonObj?.iq?.query?.[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
         // console.log(jsonObj.iq?.query[0]?.list);
       }
