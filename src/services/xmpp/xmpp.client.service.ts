@@ -321,7 +321,6 @@ export class XmppClient {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleParsedXml(jsonObj: any): void {
     if (jsonObj.hasOwnProperty("iq")) {
-      console.log(jsonObj?.iq?.query[0]?.$?.xmlns);
       const xmlns = jsonObj?.iq?.query[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
         // console.log(jsonObj.iq?.query[0]?.list);
@@ -346,7 +345,6 @@ export class XmppClient {
     const pendingFriends: Friend[] = [];
 
     for (const player of players) {
-      console.log(player);
       const { jid, puuid, name, subscription } = player?.$;
       const state =
         Array.isArray(player?.state) && player.state.length > 0
