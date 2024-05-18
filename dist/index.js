@@ -444,6 +444,7 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
   EventCallbackName2["XMPP_CHAT_HISTORY_UPDATED"] = "XMPP_CHAT_HISTORY_UPDATED";
   EventCallbackName2["XMPP_FRIENDLIST_UPDATED"] = "XMPP_FRIENDLIST_UPDATED";
   EventCallbackName2["XMPP_PENDING_FRIENDS_UPDATED"] = "XMPP_PENDING_FRIENDS_UPDATED";
+  EventCallbackName2["XMPP_MY_JID_UPDATE"] = "XMPP_MY_JID_UPDATE";
   return EventCallbackName2;
 })(EventCallbackName || {});
 
@@ -3571,9 +3572,6 @@ var BASE_PLAYER_INFO = {
 function removeRcPart(input) {
   return input.replace(/\/RC-\d+$/, "");
 }
-function startsWithGetArchive(input) {
-  return input.startsWith("get_archive");
-}
 
 // src/services/xmpp/xmpp.client.service.ts
 var XmppClient = class {
@@ -3586,6 +3584,7 @@ var XmppClient = class {
     this.host = "";
     this.port = 5223;
     this.xmppRegion = "";
+    this.lastChatHistoryFriendJid = "";
     this.authMessages = [];
     const { xmppUrl, regionLower } = getRegion(this.region);
     this.host = xmppUrl;
@@ -3596,7 +3595,8 @@ var XmppClient = class {
       `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
       `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-3138377982</resource></bind></iq>`,
       `<iq type="set" id="xmpp_entitlements_0"><entitlements xmlns="urn:riotgames:entitlements"><token>${this.entitlementsToken}</token></entitlements></iq><iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><platform>riot</platform></session></iq>`,
-      `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`
+      `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
+      `<presence/>`
     ];
   }
   listen(callback) {
@@ -3660,10 +3660,9 @@ var XmppClient = class {
     );
   }
   async getChatHistory(jid) {
+    this.lastChatHistoryFriendJid = removeRcPart(jid);
     await this.write(
-      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${removeRcPart(
-        jid
-      )}</with></query></iq>`
+      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
     );
   }
   async getFriendList() {
@@ -3784,13 +3783,16 @@ var XmppClient = class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleParsedXml(jsonObj) {
     if (jsonObj.hasOwnProperty("iq")) {
-      const xmlns = jsonObj?.iq?.query[0]?.$?.xmlns ?? null;
+      const xmlns = jsonObj?.iq?.query?.[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
+      }
+      if (jsonObj?.iq?.$?.id.startsWith("_xmpp_bind")) {
+        this.handleMyJid(jsonObj.iq);
       }
       if (xmlns === "jabber:iq:riotgames:roster") {
         this.handleFriendList(jsonObj.iq?.query[0]?.item ?? []);
       }
-      if (startsWithGetArchive(jsonObj.iq?.$?.id)) {
+      if (jsonObj.iq?.$?.id?.startsWith("get_archive")) {
         this.handleChatHistory(jsonObj.iq);
       }
     }
@@ -3835,10 +3837,10 @@ var XmppClient = class {
     );
   }
   handlePresense(presence) {
-    const from = presence.$.from;
-    const chatShow = presence.show[0];
-    const chatStatus = presence.status[0];
-    const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
+    const from = presence?.$?.from;
+    const chatShow = presence?.show?.[0];
+    const chatStatus = presence?.status?.[0];
+    const profileInfo = presence?.games?.[0]?.league_of_legends?.[0]?.p?.[0];
     Logger.default({ from });
     Logger.default({ chatShow });
     Logger.default({ chatStatus });
@@ -3847,8 +3849,15 @@ var XmppClient = class {
   handleChatHistory(conversation) {
     const chatHistory = [];
     const myJid = removeRcPart(conversation.$.from);
-    let theirJid = "";
-    removeRcPart(conversation.message[0].$.from) === myJid ? theirJid = removeRcPart(conversation.message[0].$.to) : theirJid = removeRcPart(conversation.message[0].$.from);
+    const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
+    if (!conversation?.message?.length) {
+      Logger.default({ chatHistory });
+      this.callCallback("XMPP_CHAT_HISTORY_UPDATED" /* XMPP_CHAT_HISTORY_UPDATED */, {
+        chatHistory,
+        friendJid: theirJid
+      });
+      return;
+    }
     const messages = conversation.message;
     messages?.map((message) => {
       const content = message.body[0];
@@ -3878,6 +3887,10 @@ var XmppClient = class {
     };
     Logger.default(message);
     this.callCallback("XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */, message);
+  }
+  handleMyJid(data) {
+    const myJid = removeRcPart(data?.bind?.[0]?.jid?.[0]);
+    this.callCallback("XMPP_MY_JID_UPDATE" /* XMPP_MY_JID_UPDATE */, myJid);
   }
 };
 
