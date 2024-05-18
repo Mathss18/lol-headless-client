@@ -37,4 +37,5 @@ export enum EventCallbackName {
   XMPP_CHAT_HISTORY_UPDATED = "XMPP_CHAT_HISTORY_UPDATED", // obj: { chatHistory, friendJid }
   XMPP_FRIENDLIST_UPDATED = "XMPP_FRIENDLIST_UPDATED", // obj: { Friend[] }
   XMPP_PENDING_FRIENDS_UPDATED = "XMPP_PENDING_FRIENDS_UPDATED", // obj: { Friend[] }
+  XMPP_MY_JID_UPDATE = "XMPP_MY_JID_UPDATE", // string: my jid
 }

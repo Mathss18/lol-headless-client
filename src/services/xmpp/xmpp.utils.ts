@@ -34,7 +34,3 @@ export const BASE_PLAYER_INFO: PlayerInfo = {
 export function removeRcPart(input: string): string {
   return input.replace(/\/RC-\d+$/, '');
 }
-
-export function startsWithGetArchive(input: string): boolean {
-  return input.startsWith("get_archive");
-}

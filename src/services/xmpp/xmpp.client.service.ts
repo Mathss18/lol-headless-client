@@ -6,7 +6,6 @@ import {
   BASE_PLAYER_INFO,
   generateRandomDigitsForChat,
   removeRcPart,
-  startsWithGetArchive,
 } from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
 import { getRegion } from "../../config/regions";
@@ -81,6 +80,7 @@ export class XmppClient {
   private host = "";
   private port = 5223;
   private xmppRegion = "";
+  private lastChatHistoryFriendJid = "";
   private authMessages: string[] = [];
   private _callback: (data: CallbackEvent) => void;
 
@@ -100,6 +100,7 @@ export class XmppClient {
       `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-3138377982</resource></bind></iq>`,
       `<iq type="set" id="xmpp_entitlements_0"><entitlements xmlns="urn:riotgames:entitlements"><token>${this.entitlementsToken}</token></entitlements></iq><iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><platform>riot</platform></session></iq>`,
       `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
+      `<presence/>`,
     ];
   }
 
@@ -177,10 +178,9 @@ export class XmppClient {
   }
 
   public async getChatHistory(jid: string) {
+    this.lastChatHistoryFriendJid = removeRcPart(jid);
     await this.write(
-      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${removeRcPart(
-        jid
-      )}</with></query></iq>`
+      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
     );
   }
 
@@ -325,10 +325,13 @@ export class XmppClient {
       if (xmlns === "jabber:iq:privacy") {
         // console.log(jsonObj.iq?.query[0]?.list);
       }
+      if (jsonObj?.iq?.$?.id.startsWith("_xmpp_bind")) {
+        this.handleMyJid(jsonObj.iq);
+      }
       if (xmlns === "jabber:iq:riotgames:roster") {
         this.handleFriendList(jsonObj.iq?.query[0]?.item ?? []);
       }
-      if (startsWithGetArchive(jsonObj.iq?.$?.id)) {
+      if (jsonObj.iq?.$?.id?.startsWith("get_archive")) {
         this.handleChatHistory(jsonObj.iq);
       }
     }
@@ -383,10 +386,10 @@ export class XmppClient {
   }
 
   private handlePresense(presence) {
-    const from = presence.$.from;
-    const chatShow = presence.show[0];
-    const chatStatus = presence.status[0];
-    const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
+    const from = presence?.$?.from;
+    const chatShow = presence?.show?.[0];
+    const chatStatus = presence?.status?.[0];
+    const profileInfo = presence?.games?.[0]?.league_of_legends?.[0]?.p?.[0];
     Logger.default({ from });
     Logger.default({ chatShow });
     Logger.default({ chatStatus });
@@ -396,12 +399,17 @@ export class XmppClient {
   private handleChatHistory(conversation) {
     const chatHistory: Message[] = [];
     const myJid = removeRcPart(conversation.$.from);
-    let theirJid = "";
-    removeRcPart(conversation.message[0].$.from) === myJid
-      ? (theirJid = removeRcPart(conversation.message[0].$.to))
-      : (theirJid = removeRcPart(conversation.message[0].$.from));
-    const messages = conversation.message;
+    const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
+    if (!conversation?.message?.length) {
+      Logger.default({ chatHistory });
+      this.callCallback(EventCallbackName.XMPP_CHAT_HISTORY_UPDATED, {
+        chatHistory,
+        friendJid: theirJid,
+      });
+      return;
+    }
 
+    const messages = conversation.message;
     messages?.map((message) => {
       const content = message.body[0];
       const sender = message.$.from;
@@ -433,5 +441,10 @@ export class XmppClient {
 
     Logger.default(message);
     this.callCallback(EventCallbackName.XMPP_CHAT_RECEIVED, message);
+  }
+
+  private handleMyJid(data) {
+    const myJid = removeRcPart(data?.bind?.[0]?.jid?.[0])
+    this.callCallback(EventCallbackName.XMPP_MY_JID_UPDATE, myJid);
   }
 }
