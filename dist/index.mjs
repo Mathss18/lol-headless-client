@@ -1019,7 +1019,9 @@ var UserDataSupplier = class {
       headers: this.headers
     });
     const tokenParts = response.data.split(".");
-    const decodedPayload = Buffer.from(tokenParts[1], "base64").toString("utf8");
+    const decodedPayload = Buffer.from(tokenParts[1], "base64").toString(
+      "utf8"
+    );
     const payload = JSON.parse(decodedPayload);
     return payload;
   }

@@ -40,14 +40,14 @@ export class RtmpClient {
   private messageCounter = 0;
   private heartbeatCounter = 0;
   private amfEncoder = new AMFEncoder();
-  private _callback: (data: CallbackEvent) => void
+  private _callback: (data: CallbackEvent) => void;
 
   constructor(
     private host: string,
     private port: number,
     private tokens: PublicTokens,
     private userData: UserData,
-    private username: string,
+    private username: string
   ) {
     this.rtmpConnected = false;
     this.baseRtmpInfo = new RtmoInfoBuilder();
@@ -79,7 +79,7 @@ export class RtmpClient {
         this.socket
           .on("secureConnect", () => {
             Logger.magenta("[RTMP] TLS connected \n");
-            if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_TLS_CONNECTED });
+            this.callCallback(EventCallbackName.RTMP_TLS_CONNECTED);
             this.rtmpConnected = true;
             resolve();
           })
@@ -102,7 +102,7 @@ export class RtmpClient {
       handshake.initialize(this.socket);
       handshake.once("done", () => {
         Logger.magenta("[RTMP] Handshake done \n");
-        if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_HANDSHAKE_DONE });
+        this.callCallback(EventCallbackName.RTMP_HANDSHAKE_DONE);
         this.socket.removeAllListeners();
         resolve();
       });
@@ -141,7 +141,9 @@ export class RtmpClient {
         .setPageURL("")
         .build();
       try {
-        await this.write(this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap()));
+        await this.write(
+          this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap())
+        );
         setTimeout(() => {
           resolve();
         }, 2000);
@@ -154,7 +156,9 @@ export class RtmpClient {
   public async login(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       this.rtmpPacketReader.setTag("login");
-      const typedObject = new TypedObject("com.riotgames.platform.login.AuthenticationCredentials");
+      const typedObject = new TypedObject(
+        "com.riotgames.platform.login.AuthenticationCredentials"
+      );
       typedObject.set("macAddress", "000000000000");
       typedObject.set("authToken", "");
       typedObject.set("userInfoTokenJwe", this.tokens.userInfoToken);
@@ -183,10 +187,15 @@ export class RtmpClient {
   public async login2(): Promise<void> {
     const interval = 120000; // 2 min in milies
     return new Promise(async (resolve, reject) => {
-      const body = this.rtmpPacketReader.getPacketByTag("login").getTypedObject("data").getTypedObject("body");
+      const body = this.rtmpPacketReader
+        .getPacketByTag("login")
+        .getTypedObject("data")
+        .getTypedObject("body");
 
       this.token = body.getString("token");
-      this.accountId = body.getTypedObject("accountSummary").getLong("accountId");
+      this.accountId = body
+        .getTypedObject("accountSummary")
+        .getLong("accountId");
 
       const channels: string[] = ["gn", "cn", "bc"];
 
@@ -198,7 +207,10 @@ export class RtmpClient {
 
       await sleep(500);
 
-      const buffer: Buffer = Buffer.from(`${this.username.toLowerCase()}:${this.token}`, "utf-8");
+      const buffer: Buffer = Buffer.from(
+        `${this.username.toLowerCase()}:${this.token}`,
+        "utf-8"
+      );
       const base64Encoded: string = buffer.toString("base64");
       const auth: TypedObject = this.wrap("auth", 8, base64Encoded);
       auth.setType("flex.messaging.messages.CommandMessage");
@@ -218,12 +230,17 @@ export class RtmpClient {
   }
 
   private async subscribe(client: string, operation: number): Promise<void> {
-    const body: TypedObject = this.wrap("messagingDestination", operation, [new TypedObject()]);
+    const body: TypedObject = this.wrap("messagingDestination", operation, [
+      new TypedObject(),
+    ]);
     body.setType("flex.messaging.messages.CommandMessage");
 
     const headers: TypedObject = new TypedObject();
     headers.set("DSEndpoint", "my-rtmp");
-    headers.set("DSSubtopic", !client.startsWith("b") ? client : client.split("-")[0]);
+    headers.set(
+      "DSSubtopic",
+      !client.startsWith("b") ? client : client.split("-")[0]
+    );
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
 
@@ -235,15 +252,21 @@ export class RtmpClient {
 
   private heartbeat(): void {
     const now = new Date();
-    const formatedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate()
-    ).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(
-      2,
-      "0"
-    )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
-    const data: Object[] = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
-    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count`);
-    if (this._callback) this._callback({ eventName: EventCallbackName.RTMP_HEARTBEAT, data: this.heartbeatCounter });
+    const formatedDate = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
+      now.getHours()
+    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+      now.getSeconds()
+    ).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
+    const data: Object[] = [
+      this.accountId,
+      this.token,
+      ++this.heartbeatCounter,
+      formatedDate,
+    ];
+    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count \n`);
+    this.callCallback(EventCallbackName.RTMP_HEARTBEAT, this.heartbeatCounter);
 
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
@@ -276,12 +299,18 @@ export class RtmpClient {
 
   public async selectChampion(championIds: Champion[]): Promise<void> {
     if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick) return;
-    const selectedChampion = championIds[Math.floor(Math.random() * championIds.length)];
-    Logger.magenta(`Trying to select champion ${ChampionName[selectedChampion]}`);
+    const selectedChampion =
+      championIds[Math.floor(Math.random() * championIds.length)];
+    Logger.magenta(
+      `Trying to select champion ${ChampionName[selectedChampion]}`
+    );
     await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
 
-  private async championAction(selectedChampion: Champion, actionId: number): Promise<void> {
+  private async championAction(
+    selectedChampion: Champion,
+    actionId: number
+  ): Promise<void> {
     console.log({
       actionId: actionId,
       championId: selectedChampion,
@@ -303,10 +332,15 @@ export class RtmpClient {
 
   public async selectChampionCustom(): Promise<void> {
     Logger.magenta(`Trying to select champion`);
-    await this.invoke(this.wrap("gameService", "selectChampionV2", [22, 22022]));
+    await this.invoke(
+      this.wrap("gameService", "selectChampionV2", [22, 22022])
+    );
   }
 
-  private async reportPlayer(gameId: number, offenderSummonerId: number): Promise<void> {
+  private async reportPlayer(
+    gameId: number,
+    offenderSummonerId: number
+  ): Promise<void> {
     Logger.magenta(`Trying to report player`);
     await this.invoke(
       this.wrap("lcdsServiceProxy", "call", [
@@ -363,18 +397,27 @@ export class RtmpClient {
     await this.write(data);
   }
 
-  private wrap(destination: string, operation: string | number, body: any): TypedObject {
+  private wrap(
+    destination: string,
+    operation: string | number,
+    body: any
+  ): TypedObject {
     const headers = new TypedObject();
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
     headers.set("DSEndpoint", "my-rtmp");
 
-    const typedObject = new TypedObject("flex.messaging.messages.RemotingMessage");
+    const typedObject = new TypedObject(
+      "flex.messaging.messages.RemotingMessage"
+    );
     typedObject.set("destination", destination);
     typedObject.set("operation", operation);
     typedObject.set("source", null);
     typedObject.set("timestamp", 0);
-    typedObject.set("messageId", `${this.userData.accountId}-${this.messageCounter++}`);
+    typedObject.set(
+      "messageId",
+      `${this.userData.accountId}-${this.messageCounter++}`
+    );
     typedObject.set("timeToLive", 0);
     typedObject.set("clientId", null);
     typedObject.set("headers", headers);
@@ -388,5 +431,9 @@ export class RtmpClient {
 
   private nextInvokeID(): number {
     return this.invokeID++;
+  }
+
+  private callCallback(eventName: EventCallbackName, data?: any) {
+    if (this._callback) this._callback({ eventName, data });
   }
 }

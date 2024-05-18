@@ -68,6 +68,8 @@ const main = async () => {
 
   await hc.setInfo({ status: "chat" }); // Set status to online "chat"
 
+  await hc.getChatHistory({ jid: "FRIEND-JID" }); // get chat history
+
   await hc.sendMessage({ message: "Hi", jid: "FRIEND-JID" }); // Send a message to a friend
 
   await hc.createLobby(); // Create a new Lobby

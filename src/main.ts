@@ -103,6 +103,10 @@ export class HeadlessClient {
     await this.xmppClient.setInfo({ status, playerInfo, statusMessage });
   }
 
+  public async getChatHistory({ jid }: { jid: string }) {
+    await this.xmppClient.getChatHistory(jid);
+  }
+
   public getPlayerChampions() {
     return this.virtualClient.getPlayerChampions();
   }
