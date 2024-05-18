@@ -413,7 +413,7 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
   EventCallbackName2["VIRTUAL_CLIENT_PARTY_TOKEN"] = "VIRTUAL_CLIENT_PARTY_TOKEN";
   EventCallbackName2["VIRTUAL_CLIENT_LOBBY_UNREGISTERED"] = "VIRTUAL_CLIENT_LOBBY_UNREGISTERED";
   EventCallbackName2["VIRTUAL_CLIENT_LOBBY_CREATED"] = "VIRTUAL_CLIENT_LOBBY_CREATED";
-  EventCallbackName2["VIRTUAL_CLIENT_PLAYER_COUNT"] = "VIRTUAL_CLIENT_PLAYER_COUNT";
+  EventCallbackName2["VIRTUAL_CLIENT_SELECT_GAMEMODE"] = "VIRTUAL_CLIENT_SELECT_GAMEMODE";
   EventCallbackName2["VIRTUAL_CLIENT_ROLES_SELECTED"] = "VIRTUAL_CLIENT_ROLES_SELECTED";
   EventCallbackName2["VIRTUAL_CLIENT_FINDING_MATCH"] = "VIRTUAL_CLIENT_FINDING_MATCH";
   EventCallbackName2["VIRTUAL_CLIENT_MATCH_RESTRICTED"] = "VIRTUAL_CLIENT_MATCH_RESTRICTED";
@@ -1485,22 +1485,20 @@ var VirtualClient = class {
         await this.getTokens("CLIENT")
       );
       this._riotToken = riotClientParsedTokens.access_token;
-      if (this._callback)
-        this._callback({
-          eventName: "VIRTUAL_CLIENT_RIOT_TOKEN" /* VIRTUAL_CLIENT_RIOT_TOKEN */,
-          data: this._riotToken
-        });
+      this.callCallback(
+        "VIRTUAL_CLIENT_RIOT_TOKEN" /* VIRTUAL_CLIENT_RIOT_TOKEN */,
+        this._riotToken
+      );
       Logger.cyan(`[Riot Token]: ${this._riotToken} 
 `);
       const lolParsedTokens = QueryTokenParser.parse(
         await this.getTokens("LOL")
       );
       this._lolToken = lolParsedTokens.access_token;
-      if (this._callback)
-        this._callback({
-          eventName: "VIRTUAL_CLIENT_LOL_TOKEN" /* VIRTUAL_CLIENT_LOL_TOKEN */,
-          data: this._lolToken
-        });
+      this.callCallback(
+        "VIRTUAL_CLIENT_LOL_TOKEN" /* VIRTUAL_CLIENT_LOL_TOKEN */,
+        this._lolToken
+      );
       Logger.cyan(`[LoL Token]: ${this._lolToken} 
 `);
       this._userInfoToken = await this.getUserInfo();
@@ -1515,11 +1513,10 @@ var VirtualClient = class {
       await (0, import_promises.setTimeout)(1e3);
       setInterval(async () => {
         this._sessionToken = await this.getRefreshSession();
-        if (this._callback)
-          this._callback({
-            eventName: "VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */,
-            data: this._lolToken
-          });
+        this.callCallback(
+          "VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */,
+          this._lolToken
+        );
       }, +riotClientParsedTokens.expires_in * 100);
     } catch (error) {
       console.log(error);
@@ -1541,11 +1538,7 @@ var VirtualClient = class {
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_PARTY_TOKEN" /* VIRTUAL_CLIENT_PARTY_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_PARTY_TOKEN" /* VIRTUAL_CLIENT_PARTY_TOKEN */, data);
     return data;
   }
   async unregisterLobby() {
@@ -1557,10 +1550,7 @@ var VirtualClient = class {
       this._region
     );
     await unregisterSupplier.makeRequest({});
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_LOBBY_UNREGISTERED" /* VIRTUAL_CLIENT_LOBBY_UNREGISTERED */
-      });
+    this.callCallback("VIRTUAL_CLIENT_LOBBY_UNREGISTERED" /* VIRTUAL_CLIENT_LOBBY_UNREGISTERED */);
     Logger.green("Lobby Unregistered \n");
   }
   async createLobby() {
@@ -1581,11 +1571,10 @@ var VirtualClient = class {
     Logger.cyan(`[Lobby ID]: ${this._partyId} 
 `);
     Logger.green("Lobby created! \n");
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_LOBBY_CREATED" /* VIRTUAL_CLIENT_LOBBY_CREATED */,
-        data: this._partyId
-      });
+    this.callCallback(
+      "VIRTUAL_CLIENT_LOBBY_CREATED" /* VIRTUAL_CLIENT_LOBBY_CREATED */,
+      this._partyId
+    );
   }
   async changePartyType(type) {
     const partyTypeSupplier = new PartyTypeSupplier(
@@ -1598,6 +1587,8 @@ var VirtualClient = class {
     const { data } = await partyTypeSupplier.makeRequest({});
     Logger.cyan(`[Party Type Supplier]: ${data} 
 `);
+    this.callCallback("VIRTUAL_CLIENT_USER_INFO_TOKEN" /* VIRTUAL_CLIENT_USER_INFO_TOKEN */, data);
+    this._partyType = type;
     return data;
   }
   async selectGamemode(gamemode = 420 /* RANKED_SOLO_DUO */) {
@@ -1614,11 +1605,8 @@ var VirtualClient = class {
     Logger.yellow(`[Players Count]: ${playersCount} 
 `);
     Logger.green("Gamemode selected! \n");
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_PLAYER_COUNT" /* VIRTUAL_CLIENT_PLAYER_COUNT */,
-        data: playersCount
-      });
+    this.callCallback("VIRTUAL_CLIENT_SELECT_GAMEMODE" /* VIRTUAL_CLIENT_SELECT_GAMEMODE */, data);
+    return data;
   }
   async selectRoles(roles = ["FILL" /* FILL */, "UNSELECTED" /* UNSELECTED */]) {
     Logger.green("Selecting roles... \n");
@@ -1632,10 +1620,7 @@ var VirtualClient = class {
     );
     const { data } = await roleSupplier.makeRequest({});
     Logger.green("Roles selected! \n");
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_ROLES_SELECTED" /* VIRTUAL_CLIENT_ROLES_SELECTED */
-      });
+    this.callCallback("VIRTUAL_CLIENT_ROLES_SELECTED" /* VIRTUAL_CLIENT_ROLES_SELECTED */);
   }
   async startFindingMatch() {
     Logger.green("Starting to find match... \n");
@@ -1647,10 +1632,7 @@ var VirtualClient = class {
       this._region
     );
     const { data } = await startMatchSupplier.makeRequest({});
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_FINDING_MATCH" /* VIRTUAL_CLIENT_FINDING_MATCH */
-      });
+    this.callCallback("VIRTUAL_CLIENT_FINDING_MATCH" /* VIRTUAL_CLIENT_FINDING_MATCH */);
     const activeRestrictions = data.currentParty?.activeRestrictions?.gatekeeperRestrictions;
     if (activeRestrictions?.length > 0) {
       const reason = activeRestrictions[0].reason;
@@ -1659,14 +1641,10 @@ var VirtualClient = class {
       Logger.red(`Reason: ${reason} 
 `);
       Logger.red(`Time: ${millisecondsToMinutes(remainingMillis)}`);
-      if (this._callback)
-        this._callback({
-          eventName: "VIRTUAL_CLIENT_MATCH_RESTRICTED" /* VIRTUAL_CLIENT_MATCH_RESTRICTED */,
-          data: {
-            reason,
-            remainingMillis
-          }
-        });
+      this.callCallback("VIRTUAL_CLIENT_MATCH_RESTRICTED" /* VIRTUAL_CLIENT_MATCH_RESTRICTED */, {
+        reason,
+        remainingMillis
+      });
       await progressBar(0, true, remainingMillis);
     }
     Logger.green("Finding match! \n");
@@ -1687,6 +1665,22 @@ var VirtualClient = class {
   getCurrentUser() {
     return this._userData;
   }
+  getAllTokens() {
+    return {
+      riotToken: this._riotToken,
+      lolToken: this._lolToken,
+      entitlementsToken: this._entitlementsToken,
+      userInfoToken: this._userInfoToken,
+      queueToken: this._queueToken,
+      sessionToken: this._sessionToken,
+      geopasToken: this._geoPassToken,
+      siptToken: this._siptToken,
+      partyUserToken: this._partyUserToken
+    };
+  }
+  userData() {
+    return this._userData;
+  }
   async acceptMatch(summonerSpells) {
     const startMatchSupplier = new AcceptMatchSupplier(
       this._apiRequest,
@@ -1700,10 +1694,7 @@ var VirtualClient = class {
     const { data } = await startMatchSupplier.makeRequest({});
     if (data?.payload !== void 0) {
       Logger.magenta("Match accepted! \n");
-      if (this._callback)
-        this._callback({
-          eventName: "VIRTUAL_CLIENT_MATCH_ACCEPTED" /* VIRTUAL_CLIENT_MATCH_ACCEPTED */
-        });
+      this.callCallback("VIRTUAL_CLIENT_MATCH_ACCEPTED" /* VIRTUAL_CLIENT_MATCH_ACCEPTED */);
       return true;
     } else {
       return false;
@@ -1738,11 +1729,7 @@ var VirtualClient = class {
     const { data } = await riotClientUserInfo.makeRequest({});
     Logger.cyan(`[User Info Token]: ${data} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_USER_INFO_TOKEN" /* VIRTUAL_CLIENT_USER_INFO_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_USER_INFO_TOKEN" /* VIRTUAL_CLIENT_USER_INFO_TOKEN */, data);
     return data;
   }
   async getInventory() {
@@ -1756,16 +1743,14 @@ var VirtualClient = class {
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_INVENTORY_TOKEN" /* VIRTUAL_CLIENT_INVENTORY_TOKEN */,
-        data: data.data.itemsJwt
-      });
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN" /* VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN */,
-        data: data.data.items.CHAMPION
-      });
+    this.callCallback(
+      "VIRTUAL_CLIENT_INVENTORY_TOKEN" /* VIRTUAL_CLIENT_INVENTORY_TOKEN */,
+      data.data.itemsJwt
+    );
+    this.callCallback(
+      "VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN" /* VIRTUAL_CLIENT_PLAYER_CHAMPIONS_TOKEN */,
+      data.data.items.CHAMPION
+    );
     return [data.data.itemsJwt, data.data.items.CHAMPION];
   }
   async getEntitlements() {
@@ -1776,11 +1761,10 @@ var VirtualClient = class {
     const { data } = await lolClientEntitlements.makeRequest({});
     Logger.cyan(`[Entitlements Token]: ${data.entitlements_token} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN" /* VIRTUAL_CLIENT_ENTITLEMENT_TOKEN */,
-        data: data.entitlements_token
-      });
+    this.callCallback(
+      "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN" /* VIRTUAL_CLIENT_ENTITLEMENT_TOKEN */,
+      data.entitlements_token
+    );
     return data.entitlements_token;
   }
   async getQueue() {
@@ -1794,11 +1778,7 @@ var VirtualClient = class {
     const { data } = await queueSupplier.makeRequest({});
     Logger.cyan(`[Queue Token]: ${data.token} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_QUEUE_TOKEN" /* VIRTUAL_CLIENT_QUEUE_TOKEN */,
-        data: data.token
-      });
+    this.callCallback("VIRTUAL_CLIENT_QUEUE_TOKEN" /* VIRTUAL_CLIENT_QUEUE_TOKEN */, data.token);
     return data.token;
   }
   async getSession() {
@@ -1811,11 +1791,7 @@ var VirtualClient = class {
     const { data } = await sessionSupplier.makeRequest({});
     Logger.cyan(`[Session Token]: ${data} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_SESSION_TOKEN" /* VIRTUAL_CLIENT_SESSION_TOKEN */, data);
     return data;
   }
   async getGeopas() {
@@ -1824,11 +1800,7 @@ var VirtualClient = class {
       this._lolToken
     );
     const { data } = await geopassSupplier.makeRequest({});
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_GEOPASS_TOKEN" /* VIRTUAL_CLIENT_GEOPASS_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_GEOPASS_TOKEN" /* VIRTUAL_CLIENT_GEOPASS_TOKEN */, data);
     return data;
   }
   async getSipt() {
@@ -1840,11 +1812,7 @@ var VirtualClient = class {
     const { data } = await siptSupplier.makeRequest({});
     Logger.cyan(`[Sipt Token]: ${data} 
 `);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_SIPT_TOKEN" /* VIRTUAL_CLIENT_SIPT_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_SIPT_TOKEN" /* VIRTUAL_CLIENT_SIPT_TOKEN */, data);
     return data;
   }
   async getUserData() {
@@ -1858,12 +1826,12 @@ var VirtualClient = class {
     Logger.cyan(`[User Data]:
 `);
     Logger.default(data);
-    if (this._callback)
-      this._callback({
-        eventName: "VIRTUAL_CLIENT_USER_DATA_TOKEN" /* VIRTUAL_CLIENT_USER_DATA_TOKEN */,
-        data
-      });
+    this.callCallback("VIRTUAL_CLIENT_USER_DATA_TOKEN" /* VIRTUAL_CLIENT_USER_DATA_TOKEN */, data);
     return data;
+  }
+  callCallback(eventName, data) {
+    if (this._callback)
+      this._callback({ eventName, data });
   }
   async getRefreshSession() {
     const sessionRefreshSupplier = new SessionRefreshSupplier(
@@ -1875,22 +1843,6 @@ var VirtualClient = class {
     Logger.cyan(`[(REFRESH) Session Token]: ${data} 
 `);
     return data;
-  }
-  getAllTokens() {
-    return {
-      riotToken: this._riotToken,
-      lolToken: this._lolToken,
-      entitlementsToken: this._entitlementsToken,
-      userInfoToken: this._userInfoToken,
-      queueToken: this._queueToken,
-      sessionToken: this._sessionToken,
-      geopasToken: this._geoPassToken,
-      siptToken: this._siptToken,
-      partyUserToken: this._partyUserToken
-    };
-  }
-  userData() {
-    return this._userData;
   }
 };
 
@@ -3281,8 +3233,7 @@ var RtmpClient = class {
         });
         this.socket.on("secureConnect", () => {
           Logger.magenta("[RTMP] TLS connected \n");
-          if (this._callback)
-            this._callback({ eventName: "RTMP_TLS_CONNECTED" /* RTMP_TLS_CONNECTED */ });
+          this.callCallback("RTMP_TLS_CONNECTED" /* RTMP_TLS_CONNECTED */);
           this.rtmpConnected = true;
           resolve();
         }).on("error", (error) => {
@@ -3302,8 +3253,7 @@ var RtmpClient = class {
       handshake.initialize(this.socket);
       handshake.once("done", () => {
         Logger.magenta("[RTMP] Handshake done \n");
-        if (this._callback)
-          this._callback({ eventName: "RTMP_HANDSHAKE_DONE" /* RTMP_HANDSHAKE_DONE */ });
+        this.callCallback("RTMP_HANDSHAKE_DONE" /* RTMP_HANDSHAKE_DONE */);
         this.socket.removeAllListeners();
         resolve();
       });
@@ -3332,7 +3282,9 @@ var RtmpClient = class {
     return new Promise(async (resolve, reject) => {
       const rtmpConnectInfo = this.baseRtmpInfo.replicate().setApp("").setSwfURL("app:/LolClient.swf/[[DYNAMIC]]/50").setTcURL(`rtmps://${this.host}:${this.port}`).setPageURL("").build();
       try {
-        await this.write(this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap()));
+        await this.write(
+          this.amfEncoder.encodeConnect(rtmpConnectInfo.getMap())
+        );
         setTimeout(() => {
           resolve();
         }, 2e3);
@@ -3344,7 +3296,9 @@ var RtmpClient = class {
   async login() {
     return new Promise(async (resolve, reject) => {
       this.rtmpPacketReader.setTag("login");
-      const typedObject = new typed_object_default("com.riotgames.platform.login.AuthenticationCredentials");
+      const typedObject = new typed_object_default(
+        "com.riotgames.platform.login.AuthenticationCredentials"
+      );
       typedObject.set("macAddress", "000000000000");
       typedObject.set("authToken", "");
       typedObject.set("userInfoTokenJwe", this.tokens.userInfoToken);
@@ -3381,7 +3335,10 @@ var RtmpClient = class {
         }
       }
       await (0, import_promises2.setTimeout)(500);
-      const buffer = Buffer.from(`${this.username.toLowerCase()}:${this.token}`, "utf-8");
+      const buffer = Buffer.from(
+        `${this.username.toLowerCase()}:${this.token}`,
+        "utf-8"
+      );
       const base64Encoded = buffer.toString("base64");
       const auth = this.wrap("auth", 8, base64Encoded);
       auth.setType("flex.messaging.messages.CommandMessage");
@@ -3397,11 +3354,16 @@ var RtmpClient = class {
     });
   }
   async subscribe(client, operation) {
-    const body = this.wrap("messagingDestination", operation, [new typed_object_default()]);
+    const body = this.wrap("messagingDestination", operation, [
+      new typed_object_default()
+    ]);
     body.setType("flex.messaging.messages.CommandMessage");
     const headers = new typed_object_default();
     headers.set("DSEndpoint", "my-rtmp");
-    headers.set("DSSubtopic", !client.startsWith("b") ? client : client.split("-")[0]);
+    headers.set(
+      "DSSubtopic",
+      !client.startsWith("b") ? client : client.split("-")[0]
+    );
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
     body.set("headers", headers);
@@ -3410,16 +3372,22 @@ var RtmpClient = class {
   }
   heartbeat() {
     const now = /* @__PURE__ */ new Date();
-    const formatedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate()
-    ).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(
-      2,
-      "0"
-    )}:${String(now.getSeconds()).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
-    const data = [this.accountId, this.token, ++this.heartbeatCounter, formatedDate];
-    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count`);
-    if (this._callback)
-      this._callback({ eventName: "RTMP_HEARTBEAT" /* RTMP_HEARTBEAT */, data: this.heartbeatCounter });
+    const formatedDate = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
+      now.getHours()
+    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+      now.getSeconds()
+    ).padStart(2, "0")}.${String(now.getMilliseconds()).padStart(3, "0")}`;
+    const data = [
+      this.accountId,
+      this.token,
+      ++this.heartbeatCounter,
+      formatedDate
+    ];
+    Logger.magenta(`[RTMP] Heartbeat - ${this.heartbeatCounter} count 
+`);
+    this.callCallback("RTMP_HEARTBEAT" /* RTMP_HEARTBEAT */, this.heartbeatCounter);
     try {
       this.invoke(this.wrap("loginService", "performLCDSHeartBeat", data));
     } catch (e) {
@@ -3450,7 +3418,9 @@ var RtmpClient = class {
     if (this.pickState.isChampPicked || !this.pickState.isMyTurnToPick)
       return;
     const selectedChampion = championIds[Math.floor(Math.random() * championIds.length)];
-    Logger.magenta(`Trying to select champion ${ChampionName[selectedChampion]}`);
+    Logger.magenta(
+      `Trying to select champion ${ChampionName[selectedChampion]}`
+    );
     await this.championAction(selectedChampion, this.pickState.pickActionId);
   }
   async championAction(selectedChampion, actionId) {
@@ -3474,7 +3444,9 @@ var RtmpClient = class {
   }
   async selectChampionCustom() {
     Logger.magenta(`Trying to select champion`);
-    await this.invoke(this.wrap("gameService", "selectChampionV2", [22, 22022]));
+    await this.invoke(
+      this.wrap("gameService", "selectChampionV2", [22, 22022])
+    );
   }
   async reportPlayer(gameId, offenderSummonerId) {
     Logger.magenta(`Trying to report player`);
@@ -3532,12 +3504,17 @@ var RtmpClient = class {
     headers.set("DSRequestTimeout", 60);
     headers.set("DSId", this.DSId);
     headers.set("DSEndpoint", "my-rtmp");
-    const typedObject = new typed_object_default("flex.messaging.messages.RemotingMessage");
+    const typedObject = new typed_object_default(
+      "flex.messaging.messages.RemotingMessage"
+    );
     typedObject.set("destination", destination);
     typedObject.set("operation", operation);
     typedObject.set("source", null);
     typedObject.set("timestamp", 0);
-    typedObject.set("messageId", `${this.userData.accountId}-${this.messageCounter++}`);
+    typedObject.set(
+      "messageId",
+      `${this.userData.accountId}-${this.messageCounter++}`
+    );
     typedObject.set("timeToLive", 0);
     typedObject.set("clientId", null);
     typedObject.set("headers", headers);
@@ -3549,6 +3526,10 @@ var RtmpClient = class {
   }
   nextInvokeID() {
     return this.invokeID++;
+  }
+  callCallback(eventName, data) {
+    if (this._callback)
+      this._callback({ eventName, data });
   }
 };
 
@@ -3584,6 +3565,12 @@ var BASE_PLAYER_INFO = {
   skinVariant: "",
   skinname: ""
 };
+function removeRcPart(input) {
+  return input.replace(/\/RC-\d+$/, "");
+}
+function startsWithGetArchive(input) {
+  return input.startsWith("get_archive");
+}
 
 // src/services/xmpp/xmpp.client.service.ts
 var XmppClient = class {
@@ -3618,8 +3605,7 @@ var XmppClient = class {
       this.socket = tls2.connect(this.port, this.host);
       this.socket.on("secureConnect", async () => {
         Logger.yellow("[XMPP] Connected. \n");
-        if (this._callback)
-          this._callback({ eventName: "XMPP_CONNECTED" /* XMPP_CONNECTED */ });
+        this.callCallback("XMPP_CONNECTED" /* XMPP_CONNECTED */);
         this.read();
         await (0, import_promises3.setTimeout)(500);
         await this.sendAuthMessages();
@@ -3636,8 +3622,7 @@ var XmppClient = class {
       }).on("end", () => {
         clearInterval(this.heartBeat);
         Logger.yellow("[XMPP] Server ended the connection");
-        if (this._callback)
-          this._callback({ eventName: "XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */ });
+        this.callCallback("XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */);
       });
     });
   }
@@ -3645,8 +3630,7 @@ var XmppClient = class {
     if (this.socket) {
       this.socket.end();
       Logger.yellow("[XMPP] Disconnected.");
-      if (this._callback)
-        this._callback({ eventName: "XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */ });
+      this.callCallback("XMPP_DISCONNECTED" /* XMPP_DISCONNECTED */);
     }
   }
   async addFriend(username, tagline) {
@@ -3676,6 +3660,13 @@ var XmppClient = class {
   getFriendList() {
     return this.friendList;
   }
+  async getChatHistory(jid) {
+    await this.write(
+      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${removeRcPart(
+        jid
+      )}</with></query></iq>`
+    );
+  }
   async fetchFriendList() {
     await this.write(
       `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
@@ -3696,13 +3687,11 @@ var XmppClient = class {
       let bufferedMessage = "";
       try {
         data = data.toString();
-        Logger.yellow("[RECEIVE XMPP <-] ");
-        Logger.default(data + "\n");
-        if (this._callback)
-          this._callback({
-            eventName: "XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */,
-            data
-          });
+        if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
+          Logger.yellow("[RECEIVE XMPP <-] ");
+          Logger.default(data + "\n");
+        }
+        this.callCallback("XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */, data);
         if (data.startsWith("<?xml"))
           return;
         let oldBufferedMessage = null;
@@ -3712,7 +3701,7 @@ var XmppClient = class {
           if (data === "")
             return;
           if (!data.startsWith("<"))
-            return console.log(
+            return Logger.default(
               "RIOT: xml presence data doesn't start with '<'! " + data
             );
           const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
@@ -3752,12 +3741,9 @@ var XmppClient = class {
   }
   heartbeat() {
     this.write(" ");
-    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count`);
-    if (this._callback)
-      this._callback({
-        eventName: "XMPP_HEARTBEAT" /* XMPP_HEARTBEAT */,
-        data: this.heartbeatCounter
-      });
+    Logger.yellow(`[XMPP] Heartbeat - ${++this.heartbeatCounter} count 
+`);
+    this.callCallback("XMPP_HEARTBEAT" /* XMPP_HEARTBEAT */, this.heartbeatCounter);
   }
   async write(data) {
     return new Promise((resolve, reject) => {
@@ -3766,17 +3752,19 @@ var XmppClient = class {
           if (err) {
             reject(err);
           } else {
-            Logger.yellow("[SENT XMPP ->] ");
-            Logger.default(data + "\n");
-            if (this._callback)
-              this._callback({
-                eventName: "XMPP_SENT_RAW" /* XMPP_SENT_RAW */,
-                data
-              });
+            if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
+              Logger.yellow("[SENT XMPP ->] ");
+              Logger.default(data + "\n");
+            }
+            this.callCallback("XMPP_SENT_RAW" /* XMPP_SENT_RAW */, data);
             resolve();
           }
         });
     });
+  }
+  callCallback(eventName, data) {
+    if (this._callback)
+      this._callback({ eventName, data });
   }
   async parseStringPromise(xml) {
     return new Promise((resolve, reject) => {
@@ -3784,7 +3772,10 @@ var XmppClient = class {
         if (err)
           reject(err);
         else {
-          this.handleParsedXml(result);
+          try {
+            this.handleParsedXml(result);
+          } catch (error) {
+          }
           resolve();
         }
       });
@@ -3793,25 +3784,30 @@ var XmppClient = class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleParsedXml(jsonObj) {
     if (jsonObj.hasOwnProperty("iq")) {
-      if (!jsonObj.iq?.query?.length) {
-        return;
-      }
-      const xmlns = jsonObj.iq?.query[0]?.$?.xmlns;
+      const xmlns = jsonObj?.iq?.query?.[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
       }
       if (xmlns === "jabber:iq:riotgames:roster") {
         this.handleFriendList(jsonObj.iq?.query[0]?.item ?? []);
       }
+      if (startsWithGetArchive(jsonObj.iq?.$?.id)) {
+        this.handleChatHistory(jsonObj.iq);
+      }
     }
     if (jsonObj.hasOwnProperty("message")) {
       const { id, from, to, stamp, type } = jsonObj.message.$;
-      const message = jsonObj.message.body[0];
-      Logger.default({ id, from, to, stamp, type, message });
-      if (this._callback)
-        this._callback({
-          eventName: "XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */,
-          data: { id, from, to, stamp, type, message }
-        });
+      const content = jsonObj.message.body[0];
+      const message = {
+        id,
+        sender: from,
+        receiver: to,
+        timestamp: stamp,
+        type,
+        content
+      };
+      Logger.default(message);
+      this.addMessageToFriendList(from, message);
+      this.callCallback("XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */, message);
     }
     if (jsonObj.hasOwnProperty("presence")) {
       this.handlePresense(jsonObj.presence);
@@ -3832,22 +3828,51 @@ var XmppClient = class {
         state,
         lastOnline,
         internalName,
-        tagline
+        tagline,
+        chatHistory: []
       });
     }
-    console.log(this.friendList);
   }
   handlePresense(presence) {
-    try {
-      const from = presence.$.from;
-      const chatShow = presence.show[0];
-      const chatStatus = presence.status[0];
-      const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
-      Logger.default({ from });
-      Logger.default({ chatShow });
-      Logger.default({ chatStatus });
-      Logger.default(profileInfo);
-    } catch (error) {
+    const from = presence.$.from;
+    const chatShow = presence.show[0];
+    const chatStatus = presence.status[0];
+    const profileInfo = presence?.games[0]?.league_of_legends[0]?.p[0];
+    Logger.default({ from });
+    Logger.default({ chatShow });
+    Logger.default({ chatStatus });
+    Logger.default(profileInfo);
+  }
+  handleChatHistory(conversation) {
+    const myJid = removeRcPart(conversation.$.from);
+    let theirJid = "";
+    removeRcPart(conversation.message[0].$.from) === myJid ? theirJid = removeRcPart(conversation.message[0].$.to) : theirJid = removeRcPart(conversation.message[0].$.from);
+    const messages = conversation.message;
+    messages?.map((message) => {
+      const content = message.body[0];
+      const sender = message.$.from;
+      const receiver = message.$.to;
+      const timestamp = message.$.stamp;
+      const id = message.$.id;
+      const type = message.$.type;
+      this.addMessageToFriendList(theirJid, {
+        id,
+        type,
+        sender,
+        receiver,
+        timestamp,
+        content
+      });
+    });
+  }
+  addMessageToFriendList(friendJid, message) {
+    if (this.friendList.length) {
+      const user = this.friendList.find(
+        (user2) => removeRcPart(user2.jid) === removeRcPart(friendJid)
+      );
+      if (user) {
+        user.chatHistory.push(message);
+      }
     }
   }
 };
@@ -3900,6 +3925,9 @@ var HeadlessClient = class {
     playerInfo
   }) {
     await this.xmppClient.setInfo({ status, playerInfo, statusMessage });
+  }
+  async getChatHistory({ jid }) {
+    await this.xmppClient.getChatHistory(jid);
   }
   getPlayerChampions() {
     return this.virtualClient.getPlayerChampions();

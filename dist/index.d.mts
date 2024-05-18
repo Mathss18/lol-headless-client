@@ -200,7 +200,7 @@ declare enum EventCallbackName {
     VIRTUAL_CLIENT_PARTY_TOKEN = "VIRTUAL_CLIENT_PARTY_TOKEN",
     VIRTUAL_CLIENT_LOBBY_UNREGISTERED = "VIRTUAL_CLIENT_LOBBY_UNREGISTERED",
     VIRTUAL_CLIENT_LOBBY_CREATED = "VIRTUAL_CLIENT_LOBBY_CREATED",
-    VIRTUAL_CLIENT_PLAYER_COUNT = "VIRTUAL_CLIENT_PLAYER_COUNT",
+    VIRTUAL_CLIENT_SELECT_GAMEMODE = "VIRTUAL_CLIENT_SELECT_GAMEMODE",
     VIRTUAL_CLIENT_ROLES_SELECTED = "VIRTUAL_CLIENT_ROLES_SELECTED",
     VIRTUAL_CLIENT_FINDING_MATCH = "VIRTUAL_CLIENT_FINDING_MATCH",
     VIRTUAL_CLIENT_MATCH_RESTRICTED = "VIRTUAL_CLIENT_MATCH_RESTRICTED",
@@ -269,6 +269,14 @@ type PlayerInfo = {
     skinVariant: string;
     skinname: string;
 };
+type Message = {
+    id: string;
+    type: string;
+    sender: string;
+    receiver: string;
+    timestamp: string;
+    content: string;
+};
 type Friend = {
     jid: string;
     puuid: string;
@@ -277,6 +285,7 @@ type Friend = {
     lastOnline: string;
     internalName: string;
     tagline: string;
+    chatHistory: Message[];
 };
 type ChatStatus = "chat" | "away";
 
@@ -349,6 +358,9 @@ declare class HeadlessClient {
         statusMessage?: string;
         playerInfo?: PlayerInfo;
     }): Promise<void>;
+    getChatHistory({ jid }: {
+        jid: string;
+    }): Promise<void>;
     getPlayerChampions(): Champion[];
     getFriendList(): Friend[];
     createLobby(): Promise<void>;
@@ -373,4 +385,4 @@ declare class HeadlessClient {
     private setupXmpp;
 }
 
-export { type CallbackEvent, Champion, EventCallbackName, Gamemode, HeadlessClient, type PlayerInfo, type PublicTokens, Region, Role, type UserData };
+export { type CallbackEvent, Champion, EventCallbackName, type Friend, Gamemode, HeadlessClient, type Message, type PlayerInfo, type PublicTokens, Region, Role, type UserData };
