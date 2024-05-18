@@ -2697,7 +2697,7 @@ var RtmpPacket = class {
 };
 
 // src/services/rtmp/rtmp-packet-reader.ts
-import { gunzipSync } from "browserify-zlib";
+import { gunzipSync } from "zlib";
 var RtmpPacketReader = class {
   constructor(client) {
     this.client = client;
@@ -3744,7 +3744,6 @@ var XmppClient = class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleParsedXml(jsonObj) {
     if (jsonObj.hasOwnProperty("iq")) {
-      console.log(jsonObj?.iq?.query[0]?.$?.xmlns);
       const xmlns = jsonObj?.iq?.query[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
       }
@@ -3766,7 +3765,6 @@ var XmppClient = class {
     const friendList = [];
     const pendingFriends = [];
     for (const player of players) {
-      console.log(player);
       const { jid, puuid, name, subscription } = player?.$;
       const state = Array.isArray(player?.state) && player.state.length > 0 ? player.state[0] : "";
       const lastOnline = Array.isArray(player?.last_online) && player.last_online.length > 0 ? player.last_online[0] : "";
