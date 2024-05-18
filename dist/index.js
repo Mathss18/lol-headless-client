@@ -3850,6 +3850,7 @@ var XmppClient = class {
     const chatHistory = [];
     const myJid = removeRcPart(conversation.$.from);
     const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
+    this.callCallback("XMPP_MY_JID_UPDATE" /* XMPP_MY_JID_UPDATE */, myJid);
     if (!conversation?.message?.length) {
       Logger.default({ chatHistory });
       this.callCallback("XMPP_CHAT_HISTORY_UPDATED" /* XMPP_CHAT_HISTORY_UPDATED */, {
