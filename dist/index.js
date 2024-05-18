@@ -3879,8 +3879,8 @@ var XmppClient = class {
     const content = data.body[0];
     const message = {
       id,
-      sender: from,
-      receiver: to,
+      sender: removeRcPart(from),
+      receiver: removeRcPart(to),
       timestamp: stamp,
       type,
       content
