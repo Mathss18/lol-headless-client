@@ -201,9 +201,10 @@ export class XmppClient {
     });
   }
 
-  private read(): void {
+  private read2(): void {
+    let bufferedMessage = "";
+
     this.socket.on("data", async (data) => {
-      let bufferedMessage = "";
       try {
         data = data.toString();
         if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
@@ -212,57 +213,74 @@ export class XmppClient {
         }
         this.callCallback(EventCallbackName.XMPP_RECEIVED_RAW, data);
 
-        // handle riot splitting messages into multiple parts
-        if (data.startsWith("<?xml")) return;
-        let oldBufferedMessage: string | null = null;
-        while (oldBufferedMessage !== bufferedMessage) {
-          oldBufferedMessage = bufferedMessage;
-          data = bufferedMessage + data;
-          if (data === "") return;
-          if (!data.startsWith("<"))
-            return Logger.default(
-              "RIOT: xml presence data doesn't start with '<'! " + data
+        bufferedMessage += data;
+        console.log(`Buffered Message: ${bufferedMessage}`);
+
+        // Process the buffered message
+        while (true) {
+          if (bufferedMessage === "") return;
+          if (!bufferedMessage.startsWith("<")) {
+            Logger.default(
+              "RIOT: xml presence data doesn't start with '<'! " +
+                bufferedMessage
+            );
+            bufferedMessage = "";
+            return;
+          }
+
+          const firstTagName = bufferedMessage
+            .substring(1, bufferedMessage.indexOf(">"))
+            .split(" ", 1)[0];
+          console.log(`First Tag Name: ${firstTagName}`);
+
+          // Check for self-closing tag eg <presence />
+          if (bufferedMessage.search(/<[^<>]+\/>/) === 0)
+            bufferedMessage = bufferedMessage.replace(
+              "/>",
+              `></${firstTagName}>`
             );
 
-          const firstTagName = data
-            .substring(1, data.indexOf(">"))
-            .split(" ", 1)[0];
+          let closingTagIndex = bufferedMessage.indexOf(`</${firstTagName}>`);
+          console.log(`Closing Tag Index: ${closingTagIndex}`);
 
-          // check for self closing tag eg <presence />
-          if (data.search(/<[^<>]+\/>/) === 0)
-            data = data.replace("/>", `></${firstTagName}>`);
-
-          let closingTagIndex = data.indexOf(`</${firstTagName}>`);
           if (closingTagIndex === -1) {
-            // message is split, we need to wait for the end
-            bufferedMessage = data;
+            // Message is split, we need to wait for the end
             break;
           }
 
-          // check for tag inside itself eg <a><a></a></a>
-          // this happens when you send a message to someone
+          // Check for nested tags eg <a><a></a></a>
           let containedTags = 0;
-          let nextTagIndex = data.indexOf(`<${firstTagName}`, 1);
+          let nextTagIndex = bufferedMessage.indexOf(`<${firstTagName}`, 1);
+          console.log(`Next Tag Index: ${nextTagIndex}`);
+
           while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
             containedTags++;
-            nextTagIndex = data.indexOf(`<${firstTagName}`, nextTagIndex + 1);
+            nextTagIndex = bufferedMessage.indexOf(
+              `<${firstTagName}`,
+              nextTagIndex + 1
+            );
+            console.log(
+              `Contained Tags: ${containedTags}, Next Tag Index: ${nextTagIndex}`
+            );
           }
 
           while (containedTags > 0) {
-            closingTagIndex = data.indexOf(
+            closingTagIndex = bufferedMessage.indexOf(
               `</${firstTagName}>`,
               closingTagIndex + 1
             );
             containedTags--;
+            console.log(
+              `Updated Closing Tag Index: ${closingTagIndex}, Contained Tags Left: ${containedTags}`
+            );
           }
 
           const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
-          bufferedMessage = data.substr(firstTagEnd); // will be empty string if only one tag
-          data = data.substr(0, firstTagEnd);
+          const completeMessage = bufferedMessage.substring(0, firstTagEnd);
+          bufferedMessage = bufferedMessage.substring(firstTagEnd);
 
-          await this.parseStringPromise(data);
-
-          data = "";
+          console.log(`Complete Message: ${completeMessage}`);
+          await this.parseStringPromise(completeMessage);
         }
       } catch (e) {
         console.log(e);
@@ -271,6 +289,70 @@ export class XmppClient {
 
     this.socket.once("error", (error) => {
       console.log(error);
+    });
+  }
+
+  private read(): void {
+    let bufferedMessage = "";
+
+    this.socket.on("data", async (data) => {
+      data = data.toString();
+      bufferedMessage += data;
+      if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
+        Logger.yellow("[RECEIVE XMPP <-] ");
+        Logger.default(data + "\n");
+      }
+
+      while (true) {
+        let completeMessage = null;
+
+        // Check for <stream:stream> message
+        if (bufferedMessage.includes("</stream:stream>")) {
+          const endIndex =
+            bufferedMessage.indexOf("</stream:stream>") +
+            "</stream:stream>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+        // Check for <stream:features> message
+        else if (bufferedMessage.includes("</stream:features>")) {
+          const endIndex =
+            bufferedMessage.indexOf("</stream:features>") +
+            "</stream:features>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+        // Check for <iq> message
+        else if (bufferedMessage.includes("</iq>")) {
+          const endIndex = bufferedMessage.indexOf("</iq>") + "</iq>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+        // Check for <success> message
+        else if (bufferedMessage.includes("</success>")) {
+          const endIndex =
+            bufferedMessage.indexOf("</success>") + "</success>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+        // Check for <presence> message
+        else if (bufferedMessage.includes("</presence>")) {
+          const endIndex =
+            bufferedMessage.indexOf("</presence>") + "</presence>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+
+        // No complete message found, exit the loop
+        if (!completeMessage) {
+          break;
+        }
+
+        try {
+          // Process the complete XML message
+          await this.parseStringPromise(completeMessage);
+        } catch (error) {}
+      }
     });
   }
 
@@ -305,10 +387,12 @@ export class XmppClient {
   private async parseStringPromise(xml: string): Promise<void> {
     return new Promise((resolve, reject) => {
       parseString(xml, (err, result) => {
-        if (err) reject(err);
-        else {
+        if (err) {
+          reject(err);
+        } else {
           try {
             this.handleParsedXml(result);
+            this.callCallback(EventCallbackName.XMPP_RECEIVED_RAW, xml);
           } catch (error) {
             console.log("error parsing xml", error);
           }
@@ -445,7 +529,7 @@ export class XmppClient {
   }
 
   private handleMyJid(data) {
-    const myJid = removeRcPart(data?.bind?.[0]?.jid?.[0])
+    const myJid = removeRcPart(data?.bind?.[0]?.jid?.[0]);
     this.callCallback(EventCallbackName.XMPP_MY_JID_UPDATE, myJid);
   }
 }
