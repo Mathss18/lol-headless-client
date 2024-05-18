@@ -3640,9 +3640,9 @@ var XmppClient = class {
       resolve();
     });
   }
-  read() {
+  read2() {
+    let bufferedMessage = "";
     this.socket.on("data", async (data) => {
-      let bufferedMessage = "";
       try {
         data = data.toString();
         if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
@@ -3650,44 +3650,58 @@ var XmppClient = class {
           Logger.default(data + "\n");
         }
         this.callCallback("XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */, data);
-        if (data.startsWith("<?xml"))
-          return;
-        let oldBufferedMessage = null;
-        while (oldBufferedMessage !== bufferedMessage) {
-          oldBufferedMessage = bufferedMessage;
-          data = bufferedMessage + data;
-          if (data === "")
+        bufferedMessage += data;
+        console.log(`Buffered Message: ${bufferedMessage}`);
+        while (true) {
+          if (bufferedMessage === "")
             return;
-          if (!data.startsWith("<"))
-            return Logger.default(
-              "RIOT: xml presence data doesn't start with '<'! " + data
+          if (!bufferedMessage.startsWith("<")) {
+            Logger.default(
+              "RIOT: xml presence data doesn't start with '<'! " + bufferedMessage
             );
-          const firstTagName = data.substring(1, data.indexOf(">")).split(" ", 1)[0];
-          if (data.search(/<[^<>]+\/>/) === 0)
-            data = data.replace("/>", `></${firstTagName}>`);
-          let closingTagIndex = data.indexOf(`</${firstTagName}>`);
+            bufferedMessage = "";
+            return;
+          }
+          const firstTagName = bufferedMessage.substring(1, bufferedMessage.indexOf(">")).split(" ", 1)[0];
+          console.log(`First Tag Name: ${firstTagName}`);
+          if (bufferedMessage.search(/<[^<>]+\/>/) === 0)
+            bufferedMessage = bufferedMessage.replace(
+              "/>",
+              `></${firstTagName}>`
+            );
+          let closingTagIndex = bufferedMessage.indexOf(`</${firstTagName}>`);
+          console.log(`Closing Tag Index: ${closingTagIndex}`);
           if (closingTagIndex === -1) {
-            bufferedMessage = data;
             break;
           }
           let containedTags = 0;
-          let nextTagIndex = data.indexOf(`<${firstTagName}`, 1);
+          let nextTagIndex = bufferedMessage.indexOf(`<${firstTagName}`, 1);
+          console.log(`Next Tag Index: ${nextTagIndex}`);
           while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
             containedTags++;
-            nextTagIndex = data.indexOf(`<${firstTagName}`, nextTagIndex + 1);
+            nextTagIndex = bufferedMessage.indexOf(
+              `<${firstTagName}`,
+              nextTagIndex + 1
+            );
+            console.log(
+              `Contained Tags: ${containedTags}, Next Tag Index: ${nextTagIndex}`
+            );
           }
           while (containedTags > 0) {
-            closingTagIndex = data.indexOf(
+            closingTagIndex = bufferedMessage.indexOf(
               `</${firstTagName}>`,
               closingTagIndex + 1
             );
             containedTags--;
+            console.log(
+              `Updated Closing Tag Index: ${closingTagIndex}, Contained Tags Left: ${containedTags}`
+            );
           }
           const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
-          bufferedMessage = data.substr(firstTagEnd);
-          data = data.substr(0, firstTagEnd);
-          await this.parseStringPromise(data);
-          data = "";
+          const completeMessage = bufferedMessage.substring(0, firstTagEnd);
+          bufferedMessage = bufferedMessage.substring(firstTagEnd);
+          console.log(`Complete Message: ${completeMessage}`);
+          await this.parseStringPromise(completeMessage);
         }
       } catch (e) {
         console.log(e);
@@ -3695,6 +3709,48 @@ var XmppClient = class {
     });
     this.socket.once("error", (error) => {
       console.log(error);
+    });
+  }
+  read() {
+    let bufferedMessage = "";
+    this.socket.on("data", async (data) => {
+      data = data.toString();
+      bufferedMessage += data;
+      if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
+        Logger.yellow("[RECEIVE XMPP <-] ");
+        Logger.default(data + "\n");
+      }
+      while (true) {
+        let completeMessage = null;
+        if (bufferedMessage.includes("</stream:stream>")) {
+          const endIndex = bufferedMessage.indexOf("</stream:stream>") + "</stream:stream>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        } else if (bufferedMessage.includes("</stream:features>")) {
+          const endIndex = bufferedMessage.indexOf("</stream:features>") + "</stream:features>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        } else if (bufferedMessage.includes("</iq>")) {
+          const endIndex = bufferedMessage.indexOf("</iq>") + "</iq>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        } else if (bufferedMessage.includes("</success>")) {
+          const endIndex = bufferedMessage.indexOf("</success>") + "</success>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        } else if (bufferedMessage.includes("</presence>")) {
+          const endIndex = bufferedMessage.indexOf("</presence>") + "</presence>".length;
+          completeMessage = bufferedMessage.slice(0, endIndex);
+          bufferedMessage = bufferedMessage.slice(endIndex);
+        }
+        if (!completeMessage) {
+          break;
+        }
+        try {
+          await this.parseStringPromise(completeMessage);
+        } catch (error) {
+        }
+      }
     });
   }
   heartbeat() {
@@ -3727,11 +3783,12 @@ var XmppClient = class {
   async parseStringPromise(xml) {
     return new Promise((resolve, reject) => {
       parseString(xml, (err, result) => {
-        if (err)
+        if (err) {
           reject(err);
-        else {
+        } else {
           try {
             this.handleParsedXml(result);
+            this.callCallback("XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */, xml);
           } catch (error) {
             console.log("error parsing xml", error);
           }
