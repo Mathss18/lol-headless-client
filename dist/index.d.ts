@@ -227,7 +227,44 @@ declare enum EventCallbackName {
     XMPP_DISCONNECTED = "XMPP_DISCONNECTED",
     XMPP_RECEIVED_RAW = "XMPP_RECEIVED_RAW",
     XMPP_SENT_RAW = "XMPP_SENT_RAW",
-    XMPP_CHAT_RECEIVED = "XMPP_CHAT_RECEIVED"
+    XMPP_CHAT_RECEIVED = "XMPP_CHAT_RECEIVED",
+    XMPP_CHAT_HISTORY_UPDATED = "XMPP_CHAT_HISTORY_UPDATED",
+    XMPP_FRIENDLIST_UPDATED = "XMPP_FRIENDLIST_UPDATED",
+    XMPP_PENDING_FRIENDS_UPDATED = "XMPP_PENDING_FRIENDS_UPDATED"
+}
+
+interface UserData {
+    sub: string;
+    profileIconId: number;
+    level: number;
+    shardId: string;
+    privacy: string;
+    expToNextLevel: number;
+    unnamed: false;
+    nameChangeFlag: false;
+    accountId: number;
+    name: string;
+    expPoints: number;
+    id: number;
+    exp: number;
+    iat: number;
+}
+
+declare enum SummonerSpell {
+    FLASH = 14,
+    IGNITE = 4
+}
+
+interface PublicTokens {
+    riotToken: string;
+    lolToken: string;
+    entitlementsToken: string;
+    userInfoToken: string;
+    queueToken: string;
+    sessionToken: string;
+    geopasToken: string;
+    siptToken: string;
+    partyUserToken: string;
 }
 
 type PlayerStatus = "online" | "offline" | "away";
@@ -285,43 +322,8 @@ type Friend = {
     lastOnline: string;
     internalName: string;
     tagline: string;
-    chatHistory: Message[];
 };
 type ChatStatus = "chat" | "away";
-
-interface UserData {
-    sub: string;
-    profileIconId: number;
-    level: number;
-    shardId: string;
-    privacy: string;
-    expToNextLevel: number;
-    unnamed: false;
-    nameChangeFlag: false;
-    accountId: number;
-    name: string;
-    expPoints: number;
-    id: number;
-    exp: number;
-    iat: number;
-}
-
-declare enum SummonerSpell {
-    FLASH = 14,
-    IGNITE = 4
-}
-
-interface PublicTokens {
-    riotToken: string;
-    lolToken: string;
-    entitlementsToken: string;
-    userInfoToken: string;
-    queueToken: string;
-    sessionToken: string;
-    geopasToken: string;
-    siptToken: string;
-    partyUserToken: string;
-}
 
 type CallbackEvent = {
     eventName: EventCallbackName;
@@ -362,7 +364,7 @@ declare class HeadlessClient {
         jid: string;
     }): Promise<void>;
     getPlayerChampions(): Champion[];
-    getFriendList(): Friend[];
+    getFriendList(): Promise<void>;
     createLobby(): Promise<void>;
     selectGamemode({ gamemode }: {
         gamemode: Gamemode;

@@ -34,4 +34,7 @@ export enum EventCallbackName {
   XMPP_RECEIVED_RAW = "XMPP_RECEIVED_RAW", // string: xml data
   XMPP_SENT_RAW = "XMPP_SENT_RAW", // string: xml data
   XMPP_CHAT_RECEIVED = "XMPP_CHAT_RECEIVED", // obj: { id, from, to, stamp, type, message }
+  XMPP_CHAT_HISTORY_UPDATED = "XMPP_CHAT_HISTORY_UPDATED", // obj: { chatHistory, friendJid }
+  XMPP_FRIENDLIST_UPDATED = "XMPP_FRIENDLIST_UPDATED", // obj: { Friend[] }
+  XMPP_PENDING_FRIENDS_UPDATED = "XMPP_PENDING_FRIENDS_UPDATED", // obj: { Friend[] }
 }

@@ -441,6 +441,9 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
   EventCallbackName2["XMPP_RECEIVED_RAW"] = "XMPP_RECEIVED_RAW";
   EventCallbackName2["XMPP_SENT_RAW"] = "XMPP_SENT_RAW";
   EventCallbackName2["XMPP_CHAT_RECEIVED"] = "XMPP_CHAT_RECEIVED";
+  EventCallbackName2["XMPP_CHAT_HISTORY_UPDATED"] = "XMPP_CHAT_HISTORY_UPDATED";
+  EventCallbackName2["XMPP_FRIENDLIST_UPDATED"] = "XMPP_FRIENDLIST_UPDATED";
+  EventCallbackName2["XMPP_PENDING_FRIENDS_UPDATED"] = "XMPP_PENDING_FRIENDS_UPDATED";
   return EventCallbackName2;
 })(EventCallbackName || {});
 
@@ -3579,7 +3582,6 @@ var XmppClient = class {
     this.pasToken = pasToken;
     this.entitlementsToken = entitlementsToken;
     this.region = region;
-    this.friendList = [];
     this.heartbeatCounter = 0;
     this.host = "";
     this.port = 5223;
@@ -3610,7 +3612,7 @@ var XmppClient = class {
         await (0, import_promises3.setTimeout)(500);
         await this.sendAuthMessages();
         await (0, import_promises3.setTimeout)(2e3);
-        await this.fetchFriendList();
+        await this.getFriendList();
         await (0, import_promises3.setTimeout)(1e3);
         this.heartBeat = setInterval(() => {
           this.heartbeat();
@@ -3657,9 +3659,6 @@ var XmppClient = class {
       `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
     );
   }
-  getFriendList() {
-    return this.friendList;
-  }
   async getChatHistory(jid) {
     await this.write(
       `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${removeRcPart(
@@ -3667,7 +3666,7 @@ var XmppClient = class {
       )}</with></query></iq>`
     );
   }
-  async fetchFriendList() {
+  async getFriendList() {
     await this.write(
       `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
     );
@@ -3775,6 +3774,7 @@ var XmppClient = class {
           try {
             this.handleParsedXml(result);
           } catch (error) {
+            console.log("error parsing xml", error);
           }
           resolve();
         }
@@ -3784,7 +3784,8 @@ var XmppClient = class {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleParsedXml(jsonObj) {
     if (jsonObj.hasOwnProperty("iq")) {
-      const xmlns = jsonObj?.iq?.query?.[0]?.$?.xmlns ?? null;
+      console.log(jsonObj?.iq?.query[0]?.$?.xmlns);
+      const xmlns = jsonObj?.iq?.query[0]?.$?.xmlns ?? null;
       if (xmlns === "jabber:iq:privacy") {
       }
       if (xmlns === "jabber:iq:riotgames:roster") {
@@ -3795,43 +3796,45 @@ var XmppClient = class {
       }
     }
     if (jsonObj.hasOwnProperty("message")) {
-      const { id, from, to, stamp, type } = jsonObj.message.$;
-      const content = jsonObj.message.body[0];
-      const message = {
-        id,
-        sender: from,
-        receiver: to,
-        timestamp: stamp,
-        type,
-        content
-      };
-      Logger.default(message);
-      this.addMessageToFriendList(from, message);
-      this.callCallback("XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */, message);
+      this.handleMessageReceived(jsonObj.message);
     }
     if (jsonObj.hasOwnProperty("presence")) {
       this.handlePresense(jsonObj.presence);
     }
   }
   handleFriendList(players) {
-    this.friendList = [];
+    const friendList = [];
+    const pendingFriends = [];
     for (const player of players) {
-      const { jid, puuid, name } = player?.$;
-      const state = player?.state[0];
-      const lastOnline = player.last_online[0];
-      const internalName = player.id[0].$.name;
-      const tagline = player.id[0].$.tagline;
-      this.friendList.push({
+      console.log(player);
+      const { jid, puuid, name, subscription } = player?.$;
+      const state = Array.isArray(player?.state) && player.state.length > 0 ? player.state[0] : "";
+      const lastOnline = Array.isArray(player?.last_online) && player.last_online.length > 0 ? player.last_online[0] : "";
+      const internalName = player?.id?.[0]?.$?.name ?? "";
+      const tagline = player?.id?.[0]?.$?.tagline ?? "";
+      const friend = {
         jid,
         puuid,
         name,
         state,
         lastOnline,
         internalName,
-        tagline,
-        chatHistory: []
-      });
+        tagline
+      };
+      if (subscription === "both") {
+        friendList.push(friend);
+      }
+      if (subscription === "pending_out") {
+        pendingFriends.push(friend);
+      }
     }
+    Logger.default({ friendList });
+    Logger.default({ pendingFriends });
+    this.callCallback("XMPP_FRIENDLIST_UPDATED" /* XMPP_FRIENDLIST_UPDATED */, friendList);
+    this.callCallback(
+      "XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */,
+      pendingFriends
+    );
   }
   handlePresense(presence) {
     const from = presence.$.from;
@@ -3844,6 +3847,7 @@ var XmppClient = class {
     Logger.default(profileInfo);
   }
   handleChatHistory(conversation) {
+    const chatHistory = [];
     const myJid = removeRcPart(conversation.$.from);
     let theirJid = "";
     removeRcPart(conversation.message[0].$.from) === myJid ? theirJid = removeRcPart(conversation.message[0].$.to) : theirJid = removeRcPart(conversation.message[0].$.from);
@@ -3855,25 +3859,27 @@ var XmppClient = class {
       const timestamp = message.$.stamp;
       const id = message.$.id;
       const type = message.$.type;
-      this.addMessageToFriendList(theirJid, {
-        id,
-        type,
-        sender,
-        receiver,
-        timestamp,
-        content
-      });
+      chatHistory.push({ id, content, receiver, sender, timestamp, type });
+    });
+    Logger.default({ chatHistory });
+    this.callCallback("XMPP_CHAT_HISTORY_UPDATED" /* XMPP_CHAT_HISTORY_UPDATED */, {
+      chatHistory,
+      friendJid: theirJid
     });
   }
-  addMessageToFriendList(friendJid, message) {
-    if (this.friendList.length) {
-      const user = this.friendList.find(
-        (user2) => removeRcPart(user2.jid) === removeRcPart(friendJid)
-      );
-      if (user) {
-        user.chatHistory.push(message);
-      }
-    }
+  handleMessageReceived(data) {
+    const { id, from, to, stamp, type } = data.$;
+    const content = data.body[0];
+    const message = {
+      id,
+      sender: from,
+      receiver: to,
+      timestamp: stamp,
+      type,
+      content
+    };
+    Logger.default(message);
+    this.callCallback("XMPP_CHAT_RECEIVED" /* XMPP_CHAT_RECEIVED */, message);
   }
 };
 
