@@ -91,9 +91,9 @@ export class XmppClient {
     private entitlementsToken: string,
     private region: Region
   ) {
-    const { xmppUrl, regionLower } = getRegion(this.region);
+    const { xmppUrl, regionLower2 } = getRegion(this.region);
     this.host = xmppUrl;
-    this.xmppRegion = regionLower;
+    this.xmppRegion = regionLower2;
     this.authMessages = [
       `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
       `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
