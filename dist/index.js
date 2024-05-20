@@ -34,7 +34,8 @@ __export(src_exports, {
   Gamemode: () => Gamemode,
   HeadlessClient: () => HeadlessClient,
   Region: () => Region,
-  Role: () => Role
+  Role: () => Role,
+  SummonerSpell: () => SummonerSpell
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -419,6 +420,8 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
   EventCallbackName2["VIRTUAL_CLIENT_MATCH_RESTRICTED"] = "VIRTUAL_CLIENT_MATCH_RESTRICTED";
   EventCallbackName2["VIRTUAL_CLIENT_MATCH_ACCEPTED"] = "VIRTUAL_CLIENT_MATCH_ACCEPTED";
   EventCallbackName2["VIRTUAL_CLIENT_USER_INFO_TOKEN"] = "VIRTUAL_CLIENT_USER_INFO_TOKEN";
+  EventCallbackName2["VIRTUAL_CLIENT_GAME_VERSION"] = "VIRTUAL_CLIENT_GAME_VERSION";
+  EventCallbackName2["VIRTUAL_CLIENT_CLIENT_VERSION"] = "VIRTUAL_CLIENT_CLIENT_VERSION";
   EventCallbackName2["VIRTUAL_CLIENT_ENTITLEMENT_TOKEN"] = "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN";
   EventCallbackName2["VIRTUAL_CLIENT_QUEUE_TOKEN"] = "VIRTUAL_CLIENT_QUEUE_TOKEN";
   EventCallbackName2["VIRTUAL_CLIENT_SESSION_TOKEN"] = "VIRTUAL_CLIENT_SESSION_TOKEN";
@@ -445,6 +448,7 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
   EventCallbackName2["XMPP_FRIENDLIST_UPDATED"] = "XMPP_FRIENDLIST_UPDATED";
   EventCallbackName2["XMPP_PENDING_FRIENDS_UPDATED"] = "XMPP_PENDING_FRIENDS_UPDATED";
   EventCallbackName2["XMPP_MY_JID_UPDATE"] = "XMPP_MY_JID_UPDATE";
+  EventCallbackName2["XMPP_CHAT_LAST_READ_UPDATED"] = "XMPP_CHAT_LAST_READ_UPDATED";
   return EventCallbackName2;
 })(EventCallbackName || {});
 
@@ -452,18 +456,12 @@ var EventCallbackName = /* @__PURE__ */ ((EventCallbackName2) => {
 var dotenv = __toESM(require("dotenv"));
 
 // src/helpers/version.helper.ts
-var VersionSupplier = class {
+var VersionHelper = class {
   static get version() {
     return "63.0.9.4909983.4789131";
   }
   static get versionDll() {
-    return "24.3.0.3124";
-  }
-  static get clientVersion() {
-    return "14.9.580.2108";
-  }
-  static get gameVersion() {
-    return "14.9.5802108+branch.releases-14-9.code.public.content.release.anticheat.vanguard";
+    return "24.4.1.3343";
   }
 };
 
@@ -532,7 +530,7 @@ var CookieSupplier = class {
       "Content-Type": "application/json",
       Accept: "application/json",
       Pragma: "no-cache",
-      "User-Agent": `RiotClient/${VersionSupplier.version} rso-auth (Windows;10;;Professional, x64)`
+      "User-Agent": `RiotClient/${VersionHelper.version} rso-auth (Windows;10;;Professional, x64)`
     };
     if (this._additionalCookie) {
       headers["Cookie"] = this._additionalCookie;
@@ -608,7 +606,7 @@ var EntitlementSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `RiotClient/${VersionSupplier.versionDll} entitlements (Windows;10;;Home Single Language, x64) riot_client/0`
+      "User-Agent": `RiotGamesApi/${VersionHelper.versionDll} entitlements (Windows;10;;Home Single Language, x64) riot_client/0`
     };
     return headers;
   }
@@ -774,12 +772,13 @@ var getRegion = (region) => {
 
 // src/suppliers/queue.supplier.ts
 var QueueSupplier = class {
-  constructor(apiRequest, jwt, entitlementJwt, userInfoJwt, region) {
+  constructor(apiRequest, jwt, entitlementJwt, userInfoJwt, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.entitlementJwt = entitlementJwt;
     this.userInfoJwt = userInfoJwt;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).playerPlatformEdgeUrl}/login-queue/v2/login/products/lol/regions/${getRegion(this.region).regionLower}`;
     this.apiRequest = apiRequest;
   }
@@ -797,7 +796,7 @@ var QueueSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-login)`
     };
     return headers;
   }
@@ -841,10 +840,11 @@ var RiotClientUser = class {
 
 // src/suppliers/session-refresh.supplier.ts
 var SessionRefreshSupplier = class {
-  constructor(apiRequest, jwt, region) {
+  constructor(apiRequest, jwt, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).playerPlatformEdgeUrl}/session-external/v1/session/refresh`;
     this.apiRequest = apiRequest;
   }
@@ -862,7 +862,7 @@ var SessionRefreshSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-league-session)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-league-session)`
     };
     return headers;
   }
@@ -874,11 +874,12 @@ var SessionRefreshSupplier = class {
 
 // src/suppliers/session.supplier.ts
 var SessionSupplier = class {
-  constructor(apiRequest, jwt, puuid, region) {
+  constructor(apiRequest, jwt, puuid, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).playerPlatformEdgeUrl}/session-external/v1/session/create`;
     this.apiRequest = apiRequest;
   }
@@ -896,7 +897,7 @@ var SessionSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-login)`
     };
     return headers;
   }
@@ -973,7 +974,7 @@ var UserInfoSupplier = class {
   get headers() {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
-      "User-Agent": `RiotClient/${VersionSupplier.version} rso-auth (Windows;10;;Professional, x64)`
+      "User-Agent": `RiotClient/${VersionHelper.version} rso-auth (Windows;10;;Professional, x64)`
     };
     return headers;
   }
@@ -981,7 +982,7 @@ var UserInfoSupplier = class {
 
 // src/suppliers/party.supplier.ts
 var PartySupplier = class {
-  constructor(apiRequest, jwt, puuid, accountId, id, inventoryToken, partyUserToken, userInfoJwt, region) {
+  constructor(apiRequest, jwt, puuid, accountId, id, inventoryToken, partyUserToken, userInfoJwt, region, gameVersion, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
@@ -991,6 +992,8 @@ var PartySupplier = class {
     this.partyUserToken = partyUserToken;
     this.userInfoJwt = userInfoJwt;
     this.region = region;
+    this.gameVersion = gameVersion;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/players`;
     this.apiRequest = apiRequest;
   }
@@ -1008,7 +1011,7 @@ var PartySupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1023,7 +1026,7 @@ var PartySupplier = class {
       puuid: this.puuid,
       registration: {
         experiments: {},
-        gameClientVersion: VersionSupplier.gameVersion,
+        gameClientVersion: this.gameVersion,
         inventoryToken: null,
         inventoryTokens: [""],
         playerTokens: {
@@ -1047,11 +1050,12 @@ var PartySupplier = class {
 
 // src/suppliers/user-data.supplier.ts
 var UserDataSupplier = class {
-  constructor(apiRequest, jwt, puuid, region) {
+  constructor(apiRequest, jwt, puuid, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = ``;
     this.apiRequest = apiRequest;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/summoner-ledge/v1/regions/${getRegion(this.region).regionUpper}/summoners/puuid`;
@@ -1072,7 +1076,7 @@ var UserDataSupplier = class {
   get headers() {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-summoner)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-summoner)`
     };
     return headers;
   }
@@ -1080,12 +1084,13 @@ var UserDataSupplier = class {
 
 // src/suppliers/gamemode.supplier.ts
 var GamemodeSupplier = class {
-  constructor(apiRequest, jwt, partyId, gamemode, region) {
+  constructor(apiRequest, jwt, partyId, gamemode, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.partyId = partyId;
     this.gamemode = gamemode;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
     this.apiRequest = apiRequest;
   }
@@ -1103,7 +1108,7 @@ var GamemodeSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1126,13 +1131,14 @@ var GamemodeSupplier = class {
 
 // src/suppliers/role.supplier.ts
 var RoleSupplier = class {
-  constructor(apiRequest, jwt, partyId, puuid, roles, region) {
+  constructor(apiRequest, jwt, partyId, puuid, roles, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.partyId = partyId;
     this.puuid = puuid;
     this.roles = roles;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
     this.apiRequest = apiRequest;
   }
@@ -1150,7 +1156,7 @@ var RoleSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1168,12 +1174,13 @@ var RoleSupplier = class {
 
 // src/suppliers/start-find-match.supplier.ts
 var StartFindMatchSupplier = class {
-  constructor(apiRequest, jwt, partyId, puuid, region) {
+  constructor(apiRequest, jwt, partyId, puuid, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.partyId = partyId;
     this.puuid = puuid;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
     this.apiRequest = apiRequest;
   }
@@ -1191,7 +1198,7 @@ var StartFindMatchSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1199,7 +1206,7 @@ var StartFindMatchSupplier = class {
 
 // src/suppliers/accept-match.supplier.ts
 var AcceptMatchSupplier = class {
-  constructor(apiRequest, jwt, accountId, summonerId, inventoryToken, summonerSpells, region) {
+  constructor(apiRequest, jwt, accountId, summonerId, inventoryToken, summonerSpells, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.accountId = accountId;
@@ -1207,6 +1214,7 @@ var AcceptMatchSupplier = class {
     this.inventoryToken = inventoryToken;
     this.summonerSpells = summonerSpells;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/team-builder-ledge/v2/indicateAfkReadiness`;
     this.apiRequest = apiRequest;
   }
@@ -1224,7 +1232,7 @@ var AcceptMatchSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1242,10 +1250,11 @@ var AcceptMatchSupplier = class {
 
 // src/suppliers/sipt.supplier.ts
 var SiptSupplier = class {
-  constructor(apiRequest, jwt, region) {
+  constructor(apiRequest, jwt, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/sipt/v1/sipt/token`;
     this.apiRequest = apiRequest;
   }
@@ -1261,7 +1270,7 @@ var SiptSupplier = class {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-login)`
     };
     return headers;
   }
@@ -1269,12 +1278,13 @@ var SiptSupplier = class {
 
 // src/suppliers/inventory.supplier.ts
 var InventorySupplier = class {
-  constructor(apiRequest, jwt, puuid, accountId, region) {
+  constructor(apiRequest, jwt, puuid, accountId, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
     this.accountId = accountId;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/lolinventoryservice-ledge/v1/inventories/simple?inventoryTypes=CHAMPION&inventoryTypes=CHAMPION_SKIN`;
     this.apiRequest = apiRequest;
   }
@@ -1291,7 +1301,7 @@ var InventorySupplier = class {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-inventory)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-inventory)`
     };
     return headers;
   }
@@ -1309,11 +1319,12 @@ var InventorySupplier = class {
 
 // src/suppliers/unregister.supplier.ts
 var UnregisterSupplier = class {
-  constructor(apiRequest, jwt, puuid, region) {
+  constructor(apiRequest, jwt, puuid, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/players`;
     this.apiRequest = apiRequest;
   }
@@ -1331,7 +1342,7 @@ var UnregisterSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
@@ -1339,11 +1350,12 @@ var UnregisterSupplier = class {
 
 // src/suppliers/party-user-token.supplier.ts
 var PartyUserTokenSupplier = class {
-  constructor(apiRequest, jwt, puuid, region) {
+  constructor(apiRequest, jwt, puuid, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.puuid = puuid;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/summoner-ledge/v1/regions/${getRegion(this.region).regionLower}/summoners/puuid`;
     this.apiRequest = apiRequest;
   }
@@ -1361,7 +1373,7 @@ var PartyUserTokenSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-summoner)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-summoner)`
     };
     return headers;
   }
@@ -1436,12 +1448,13 @@ function millisecondsToMinutes(milliseconds) {
 
 // src/suppliers/party-type.supplier.ts
 var PartyTypeSupplier = class {
-  constructor(apiRequest, jwt, partyId, type, region) {
+  constructor(apiRequest, jwt, partyId, type, region, clientVersion) {
     this.apiRequest = apiRequest;
     this.jwt = jwt;
     this.partyId = partyId;
     this.type = type;
     this.region = region;
+    this.clientVersion = clientVersion;
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
     this.apiRequest = apiRequest;
   }
@@ -1459,13 +1472,37 @@ var PartyTypeSupplier = class {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
     };
     return headers;
   }
   get body() {
     const body = this.type;
     return body;
+  }
+};
+
+// src/suppliers/version.supplier.ts
+var VersionSupplier = class {
+  constructor(apiRequest, region) {
+    this.apiRequest = apiRequest;
+    this.region = region;
+    this.URL = `https://sieve.services.riotcdn.net/api/v1/products/lol/version-sets/${getRegion(this.region).regionUpper}?q[platform]=windows&q[artifact_type_id]=lol-game-client&q[published]=true`;
+    this.apiRequest = apiRequest;
+  }
+  async makeRequest({ method = "GET" }) {
+    const response = await this.apiRequest.request({
+      url: this.URL,
+      method,
+      headers: this.headers
+    });
+    return response;
+  }
+  get headers() {
+    const headers = {
+      Accept: "application/json"
+    };
+    return headers;
   }
 };
 
@@ -1478,6 +1515,8 @@ var VirtualClient = class {
     this._callback = callback;
   }
   async login(username, password, region = "BR" /* BR */) {
+    this.gameVersion = await this.getGameVersion(region);
+    this.clientVersion = await this.getClientVersion();
     Logger.green("Starting login process... \n");
     Logger.green(`Selected Region: ${getRegion(region).name} 
 `);
@@ -1537,7 +1576,8 @@ var VirtualClient = class {
       this._apiRequest,
       this._sessionToken,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} 
@@ -1551,7 +1591,8 @@ var VirtualClient = class {
       this._apiRequest,
       this._sessionToken,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
     await unregisterSupplier.makeRequest({});
     this.callCallback("VIRTUAL_CLIENT_LOBBY_UNREGISTERED" /* VIRTUAL_CLIENT_LOBBY_UNREGISTERED */);
@@ -1568,7 +1609,9 @@ var VirtualClient = class {
       this._inventoryToken,
       this._partyUserToken,
       this._userInfoToken,
-      this._region
+      this._region,
+      this.gameVersion,
+      this.clientVersion
     );
     const { data } = await partySupplier.makeRequest({});
     this._partyId = data.currentParty.partyId;
@@ -1586,12 +1629,12 @@ var VirtualClient = class {
       this._lolToken,
       this._partyId,
       type,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await partyTypeSupplier.makeRequest({});
     Logger.cyan(`[Party Type Supplier]: ${data} 
 `);
-    this.callCallback("VIRTUAL_CLIENT_USER_INFO_TOKEN" /* VIRTUAL_CLIENT_USER_INFO_TOKEN */, data);
     this._partyType = type;
     return data;
   }
@@ -1602,7 +1645,8 @@ var VirtualClient = class {
       this._sessionToken,
       this._partyId,
       gamemode,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await gamemodeSupplier.makeRequest({});
     const playersCount = data.currentParty.players.length;
@@ -1620,7 +1664,8 @@ var VirtualClient = class {
       this._partyId,
       this._userData.sub,
       roles,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await roleSupplier.makeRequest({});
     Logger.green("Roles selected! \n");
@@ -1633,7 +1678,8 @@ var VirtualClient = class {
       this._sessionToken,
       this._partyId,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await startMatchSupplier.makeRequest({});
     this.callCallback("VIRTUAL_CLIENT_FINDING_MATCH" /* VIRTUAL_CLIENT_FINDING_MATCH */);
@@ -1693,7 +1739,8 @@ var VirtualClient = class {
       this._userData.id,
       this._inventoryToken,
       summonerSpells,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await startMatchSupplier.makeRequest({});
     if (data?.payload !== void 0) {
@@ -1742,7 +1789,8 @@ var VirtualClient = class {
       this._sessionToken,
       this._userData.sub,
       this._userData.accountId,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} 
@@ -1777,7 +1825,8 @@ var VirtualClient = class {
       this._lolToken,
       this._entitlementsToken,
       this._userInfoToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await queueSupplier.makeRequest({});
     Logger.cyan(`[Queue Token]: ${data.token} 
@@ -1790,7 +1839,8 @@ var VirtualClient = class {
       this._apiRequest,
       this._queueToken,
       new RiotClientUser(this._riotToken).getSub(),
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await sessionSupplier.makeRequest({});
     Logger.cyan(`[Session Token]: ${data} 
@@ -1807,11 +1857,34 @@ var VirtualClient = class {
     this.callCallback("VIRTUAL_CLIENT_GEOPASS_TOKEN" /* VIRTUAL_CLIENT_GEOPASS_TOKEN */, data);
     return data;
   }
+  async getGameVersion(region) {
+    const versionSupplier = new VersionSupplier(this._apiRequest, region);
+    const { data } = await versionSupplier.makeRequest({});
+    const gameVersion = data.releases[0].compat_version.id;
+    Logger.cyan(`[Game Version]: ${gameVersion} 
+`);
+    this.callCallback(
+      "VIRTUAL_CLIENT_GAME_VERSION" /* VIRTUAL_CLIENT_GAME_VERSION */,
+      gameVersion
+    );
+    return gameVersion;
+  }
+  async getClientVersion() {
+    const clientVersion = "14.10.584.5961";
+    Logger.cyan(`[Client Version]: ${clientVersion} 
+`);
+    this.callCallback(
+      "VIRTUAL_CLIENT_CLIENT_VERSION" /* VIRTUAL_CLIENT_CLIENT_VERSION */,
+      clientVersion
+    );
+    return clientVersion;
+  }
   async getSipt() {
     const siptSupplier = new SiptSupplier(
       this._apiRequest,
       this._sessionToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await siptSupplier.makeRequest({});
     Logger.cyan(`[Sipt Token]: ${data} 
@@ -1824,7 +1897,8 @@ var VirtualClient = class {
       this._apiRequest,
       this._sessionToken,
       new RiotClientUser(this._riotToken).getSub(),
-      this._region
+      this._region,
+      this.clientVersion
     );
     const data = await userDataSupplier.makeRequest({});
     Logger.cyan(`[User Data]:
@@ -1841,7 +1915,8 @@ var VirtualClient = class {
     const sessionRefreshSupplier = new SessionRefreshSupplier(
       this._apiRequest,
       this._sessionToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await sessionRefreshSupplier.makeRequest({});
     Logger.cyan(`[(REFRESH) Session Token]: ${data} 
@@ -3572,6 +3647,17 @@ var BASE_PLAYER_INFO = {
 function removeRcPart(input) {
   return input.replace(/\/RC-\d+$/, "");
 }
+function getFormattedDate() {
+  const now = /* @__PURE__ */ new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
 
 // src/services/xmpp/xmpp.client.service.ts
 var XmppClient = class {
@@ -3659,10 +3745,21 @@ var XmppClient = class {
       `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
     );
   }
-  async getChatHistory(jid) {
-    this.lastChatHistoryFriendJid = removeRcPart(jid);
+  async markChatHistoryAsRead(jid) {
+    jid = removeRcPart(jid);
+    const id = generateRandomDigitsForChat(2);
     await this.write(
-      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
+      `<iq type="set" id="set_archive_read_${id}"><query xmlns="jabber:iq:riotgames:archive:read"><acknowledge with="${jid}" read="${getFormattedDate()}" /></query></iq>`
+    );
+  }
+  async getChatHistory(jid, markChatHistoryAsRead = true) {
+    if (markChatHistoryAsRead) {
+      this.markChatHistoryAsRead(jid);
+    }
+    this.lastChatHistoryFriendJid = removeRcPart(jid);
+    const id = generateRandomDigitsForChat(2);
+    await this.write(
+      `<iq type="get" id="get_archive_${id}"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
     );
   }
   async getFriendList() {
@@ -3678,77 +3775,6 @@ var XmppClient = class {
       }
       await (0, import_promises3.setTimeout)(2e3);
       resolve();
-    });
-  }
-  read2() {
-    let bufferedMessage = "";
-    this.socket.on("data", async (data) => {
-      try {
-        data = data.toString();
-        if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
-          Logger.yellow("[RECEIVE XMPP <-] ");
-          Logger.default(data + "\n");
-        }
-        this.callCallback("XMPP_RECEIVED_RAW" /* XMPP_RECEIVED_RAW */, data);
-        bufferedMessage += data;
-        console.log(`Buffered Message: ${bufferedMessage}`);
-        while (true) {
-          if (bufferedMessage === "")
-            return;
-          if (!bufferedMessage.startsWith("<")) {
-            Logger.default(
-              "RIOT: xml presence data doesn't start with '<'! " + bufferedMessage
-            );
-            bufferedMessage = "";
-            return;
-          }
-          const firstTagName = bufferedMessage.substring(1, bufferedMessage.indexOf(">")).split(" ", 1)[0];
-          console.log(`First Tag Name: ${firstTagName}`);
-          if (bufferedMessage.search(/<[^<>]+\/>/) === 0)
-            bufferedMessage = bufferedMessage.replace(
-              "/>",
-              `></${firstTagName}>`
-            );
-          let closingTagIndex = bufferedMessage.indexOf(`</${firstTagName}>`);
-          console.log(`Closing Tag Index: ${closingTagIndex}`);
-          if (closingTagIndex === -1) {
-            break;
-          }
-          let containedTags = 0;
-          let nextTagIndex = bufferedMessage.indexOf(`<${firstTagName}`, 1);
-          console.log(`Next Tag Index: ${nextTagIndex}`);
-          while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
-            containedTags++;
-            nextTagIndex = bufferedMessage.indexOf(
-              `<${firstTagName}`,
-              nextTagIndex + 1
-            );
-            console.log(
-              `Contained Tags: ${containedTags}, Next Tag Index: ${nextTagIndex}`
-            );
-          }
-          while (containedTags > 0) {
-            closingTagIndex = bufferedMessage.indexOf(
-              `</${firstTagName}>`,
-              closingTagIndex + 1
-            );
-            containedTags--;
-            console.log(
-              `Updated Closing Tag Index: ${closingTagIndex}, Contained Tags Left: ${containedTags}`
-            );
-          }
-          const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
-          const completeMessage = bufferedMessage.substring(0, firstTagEnd);
-          bufferedMessage = bufferedMessage.substring(firstTagEnd);
-          console.log(`Complete Message: ${completeMessage}`);
-          await this.parseStringPromise(completeMessage);
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    });
-    this.socket.once("error", (error) => {
-      console.log(error);
     });
   }
   read() {
@@ -3885,8 +3911,6 @@ var XmppClient = class {
         pendingFriends.push(friend);
       }
     }
-    Logger.default({ friendList });
-    Logger.default({ pendingFriends });
     this.callCallback("XMPP_FRIENDLIST_UPDATED" /* XMPP_FRIENDLIST_UPDATED */, friendList);
     this.callCallback(
       "XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */,
@@ -3909,7 +3933,6 @@ var XmppClient = class {
     const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
     this.callCallback("XMPP_MY_JID_UPDATE" /* XMPP_MY_JID_UPDATE */, myJid);
     if (!conversation?.message?.length) {
-      Logger.default({ chatHistory });
       this.callCallback("XMPP_CHAT_HISTORY_UPDATED" /* XMPP_CHAT_HISTORY_UPDATED */, {
         chatHistory,
         friendJid: theirJid
@@ -3926,11 +3949,14 @@ var XmppClient = class {
       const type = message.$.type;
       chatHistory.push({ id, content, receiver, sender, timestamp, type });
     });
-    Logger.default({ chatHistory });
     this.callCallback("XMPP_CHAT_HISTORY_UPDATED" /* XMPP_CHAT_HISTORY_UPDATED */, {
       chatHistory,
       friendJid: theirJid
     });
+    this.callCallback(
+      "XMPP_CHAT_LAST_READ_UPDATED" /* XMPP_CHAT_LAST_READ_UPDATED */,
+      conversation?.reader?.$?.read
+    );
   }
   handleMessageReceived(data) {
     const { id, from, to, stamp, type } = data.$;
@@ -4078,6 +4104,13 @@ var HeadlessClient = class {
     return this.xmppClient;
   }
 };
+
+// src/enums/summoner-spell.enum.ts
+var SummonerSpell = /* @__PURE__ */ ((SummonerSpell2) => {
+  SummonerSpell2[SummonerSpell2["FLASH"] = 14] = "FLASH";
+  SummonerSpell2[SummonerSpell2["IGNITE"] = 4] = "IGNITE";
+  return SummonerSpell2;
+})(SummonerSpell || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Champion,
@@ -4085,5 +4118,6 @@ var HeadlessClient = class {
   Gamemode,
   HeadlessClient,
   Region,
-  Role
+  Role,
+  SummonerSpell
 });

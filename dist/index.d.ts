@@ -206,6 +206,8 @@ declare enum EventCallbackName {
     VIRTUAL_CLIENT_MATCH_RESTRICTED = "VIRTUAL_CLIENT_MATCH_RESTRICTED",
     VIRTUAL_CLIENT_MATCH_ACCEPTED = "VIRTUAL_CLIENT_MATCH_ACCEPTED",
     VIRTUAL_CLIENT_USER_INFO_TOKEN = "VIRTUAL_CLIENT_USER_INFO_TOKEN",
+    VIRTUAL_CLIENT_GAME_VERSION = "VIRTUAL_CLIENT_GAME_VERSION",
+    VIRTUAL_CLIENT_CLIENT_VERSION = "VIRTUAL_CLIENT_CLIENT_VERSION",
     VIRTUAL_CLIENT_ENTITLEMENT_TOKEN = "VIRTUAL_CLIENT_ENTITLEMENT_TOKEN",
     VIRTUAL_CLIENT_QUEUE_TOKEN = "VIRTUAL_CLIENT_QUEUE_TOKEN",
     VIRTUAL_CLIENT_SESSION_TOKEN = "VIRTUAL_CLIENT_SESSION_TOKEN",
@@ -231,7 +233,8 @@ declare enum EventCallbackName {
     XMPP_CHAT_HISTORY_UPDATED = "XMPP_CHAT_HISTORY_UPDATED",
     XMPP_FRIENDLIST_UPDATED = "XMPP_FRIENDLIST_UPDATED",
     XMPP_PENDING_FRIENDS_UPDATED = "XMPP_PENDING_FRIENDS_UPDATED",
-    XMPP_MY_JID_UPDATE = "XMPP_MY_JID_UPDATE"
+    XMPP_MY_JID_UPDATE = "XMPP_MY_JID_UPDATE",
+    XMPP_CHAT_LAST_READ_UPDATED = "XMPP_CHAT_LAST_READ_UPDATED"
 }
 
 interface UserData {
@@ -388,4 +391,4 @@ declare class HeadlessClient {
     private setupXmpp;
 }
 
-export { type CallbackEvent, Champion, EventCallbackName, type Friend, Gamemode, HeadlessClient, type Message, type PlayerInfo, type PublicTokens, Region, Role, type UserData };
+export { type CallbackEvent, Champion, EventCallbackName, type Friend, Gamemode, HeadlessClient, type Message, type PlayerInfo, type PublicTokens, Region, Role, SummonerSpell, type UserData };
