@@ -659,6 +659,7 @@ var regions = {
     name: "Brazil",
     regionUpper: "BR1",
     regionLower: "br1",
+    regionLower2: "br1",
     rtmpHost: "feapp.br1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://br-red.lol.sgp.pvp.net",
@@ -670,6 +671,7 @@ var regions = {
     name: "Europe West",
     regionUpper: "EUW1",
     regionLower: "euw1",
+    regionLower2: "eu1",
     rtmpHost: "feapp.euw1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://euw-red.lol.sgp.pvp.net",
@@ -681,6 +683,7 @@ var regions = {
     name: "Europe Nordic & East",
     regionUpper: "EUN1",
     regionLower: "eun1",
+    regionLower2: "eun1",
     rtmpHost: "prod.eun1.lol.riotgames.com",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://eune-blue.lol.sgp.pvp.net",
@@ -692,6 +695,7 @@ var regions = {
     name: "Japan",
     regionUpper: "JP1",
     regionLower: "jp1",
+    regionLower2: "jp1",
     rtmpHost: "feapp.jp1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://jp-red.lol.sgp.pvp.net",
@@ -703,6 +707,7 @@ var regions = {
     name: "Latin America North",
     regionUpper: "LA1",
     regionLower: "la1",
+    regionLower2: "la1",
     rtmpHost: "feapp.la1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://las-red.lol.sgp.pvp.net",
@@ -714,6 +719,7 @@ var regions = {
     name: "Latin America South",
     regionUpper: "LA2",
     regionLower: "la2",
+    regionLower2: "la2",
     rtmpHost: "feapp.la2.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://lan-red.lol.sgp.pvp.net",
@@ -725,6 +731,7 @@ var regions = {
     name: "North America",
     regionUpper: "NA",
     regionLower: "na",
+    regionLower2: "na",
     rtmpHost: "feapp.na1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://na-red.lol.sgp.pvp.net",
@@ -736,6 +743,7 @@ var regions = {
     name: "Oceania",
     regionUpper: "OC1",
     regionLower: "oc1",
+    regionLower2: "oc1",
     rtmpHost: "feapp.oc1.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://oce-red.lol.sgp.pvp.net",
@@ -747,6 +755,7 @@ var regions = {
     name: "Russia",
     regionUpper: "RU",
     regionLower: "ru",
+    regionLower2: "ru",
     rtmpHost: "feapp.ru.lol.pvp.net",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://ru-red.lol.sgp.pvp.net",
@@ -758,6 +767,7 @@ var regions = {
     name: "Turkey",
     regionUpper: "TR",
     regionLower: "tr",
+    regionLower2: "tr",
     rtmpHost: "prod.tr.lol.riotgames.com",
     rtmpPort: 2099,
     leagueEdgeUrl: "https://tr-blue.lol.sgp.pvp.net",
@@ -3672,9 +3682,9 @@ var XmppClient = class {
     this.xmppRegion = "";
     this.lastChatHistoryFriendJid = "";
     this.authMessages = [];
-    const { xmppUrl, regionLower } = getRegion(this.region);
+    const { xmppUrl, regionLower2 } = getRegion(this.region);
     this.host = xmppUrl;
-    this.xmppRegion = regionLower;
+    this.xmppRegion = regionLower2;
     this.authMessages = [
       `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
       `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
