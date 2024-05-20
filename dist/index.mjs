@@ -2782,6 +2782,7 @@ var RtmpPacket = class {
 };
 
 // src/services/rtmp/rtmp-packet-reader.ts
+import { ungzip } from "pako";
 var RtmpPacketReader = class {
   constructor(client) {
     this.client = client;
@@ -2938,8 +2939,9 @@ var RtmpPacketReader = class {
   }
   decodeGzipBase64(input) {
     const buffer = Buffer.from(input, "base64");
-    const decompressed = buffer;
-    return JSON.parse(decompressed.toString());
+    const decompressed = ungzip(buffer);
+    const decompressedString = new TextDecoder().decode(decompressed);
+    return JSON.parse(decompressedString);
   }
   myBanPhaseActions(actionSetList, myCellId) {
     if (this.client.pickState.bannedChampion)
