@@ -1,6 +1,5 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
@@ -14,7 +13,8 @@ export class QueueSupplier {
     private jwt: string,
     private entitlementJwt: string,
     private userInfoJwt: string,
-    private region: Region
+    private region: Region,
+    private clientVersion: string,
   ) {
     this.apiRequest = apiRequest;
   }
@@ -34,7 +34,7 @@ export class QueueSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-login)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-login)`,
     };
 
     return headers;

@@ -3,39 +3,30 @@ import { ApiRequest } from "src/services/http/api-request";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
-export class PartyUserTokenSupplier {
-  readonly URL = `${
-    getRegion(this.region).leagueEdgeUrl
-  }/summoner-ledge/v1/regions/${
-    getRegion(this.region).regionLower
-  }/summoners/puuid`;
+export class VersionSupplier {
+  readonly URL = `https://sieve.services.riotcdn.net/api/v1/products/lol/version-sets/${
+    getRegion(this.region).regionUpper
+  }?q[platform]=windows&q[artifact_type_id]=lol-game-client&q[published]=true`;
 
   constructor(
     private apiRequest: ApiRequest,
-    private jwt: string,
-    private puuid: string,
-    private region: Region,
-    private clientVersion: string
+    private region: Region
   ) {
     this.apiRequest = apiRequest;
   }
 
   public async makeRequest({ method = "GET" }): Promise<AxiosResponse> {
     const response = await this.apiRequest.request({
-      url: `${this.URL}/${this.puuid}/jwt`,
+      url: this.URL,
       method: method,
       headers: this.headers,
-      body: {},
     });
     return response;
   }
 
   public get headers() {
     const headers = {
-      Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
-      "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-summoner)`,
     };
 
     return headers;

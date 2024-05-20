@@ -5,6 +5,7 @@ import { parseString } from "xml2js";
 import {
   BASE_PLAYER_INFO,
   generateRandomDigitsForChat,
+  getFormattedDate,
   removeRcPart,
 } from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
@@ -177,10 +178,22 @@ export class XmppClient {
     );
   }
 
-  public async getChatHistory(jid: string) {
-    this.lastChatHistoryFriendJid = removeRcPart(jid);
+  public async markChatHistoryAsRead(jid: string) {
+    jid = removeRcPart(jid);
+    const id = generateRandomDigitsForChat(2);
     await this.write(
-      `<iq type="get" id="get_archive_6"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
+      `<iq type="set" id="set_archive_read_${id}"><query xmlns="jabber:iq:riotgames:archive:read"><acknowledge with="${jid}" read="${getFormattedDate()}" /></query></iq>`
+    );
+  }
+
+  public async getChatHistory(jid: string, markChatHistoryAsRead = true) {
+    if (markChatHistoryAsRead) {
+      this.markChatHistoryAsRead(jid);
+    }
+    this.lastChatHistoryFriendJid = removeRcPart(jid);
+    const id = generateRandomDigitsForChat(2);
+    await this.write(
+      `<iq type="get" id="get_archive_${id}"><query xmlns="jabber:iq:riotgames:archive"><with>${this.lastChatHistoryFriendJid}</with></query></iq>`
     );
   }
 
@@ -198,97 +211,6 @@ export class XmppClient {
       }
       await sleep(2000);
       resolve();
-    });
-  }
-
-  private read2(): void {
-    let bufferedMessage = "";
-
-    this.socket.on("data", async (data) => {
-      try {
-        data = data.toString();
-        if (process.env?.LOL_HEADLESS_CLIENT_XMPP_LOGS === "true") {
-          Logger.yellow("[RECEIVE XMPP <-] ");
-          Logger.default(data + "\n");
-        }
-        this.callCallback(EventCallbackName.XMPP_RECEIVED_RAW, data);
-
-        bufferedMessage += data;
-        console.log(`Buffered Message: ${bufferedMessage}`);
-
-        // Process the buffered message
-        while (true) {
-          if (bufferedMessage === "") return;
-          if (!bufferedMessage.startsWith("<")) {
-            Logger.default(
-              "RIOT: xml presence data doesn't start with '<'! " +
-                bufferedMessage
-            );
-            bufferedMessage = "";
-            return;
-          }
-
-          const firstTagName = bufferedMessage
-            .substring(1, bufferedMessage.indexOf(">"))
-            .split(" ", 1)[0];
-          console.log(`First Tag Name: ${firstTagName}`);
-
-          // Check for self-closing tag eg <presence />
-          if (bufferedMessage.search(/<[^<>]+\/>/) === 0)
-            bufferedMessage = bufferedMessage.replace(
-              "/>",
-              `></${firstTagName}>`
-            );
-
-          let closingTagIndex = bufferedMessage.indexOf(`</${firstTagName}>`);
-          console.log(`Closing Tag Index: ${closingTagIndex}`);
-
-          if (closingTagIndex === -1) {
-            // Message is split, we need to wait for the end
-            break;
-          }
-
-          // Check for nested tags eg <a><a></a></a>
-          let containedTags = 0;
-          let nextTagIndex = bufferedMessage.indexOf(`<${firstTagName}`, 1);
-          console.log(`Next Tag Index: ${nextTagIndex}`);
-
-          while (nextTagIndex !== -1 && nextTagIndex < closingTagIndex) {
-            containedTags++;
-            nextTagIndex = bufferedMessage.indexOf(
-              `<${firstTagName}`,
-              nextTagIndex + 1
-            );
-            console.log(
-              `Contained Tags: ${containedTags}, Next Tag Index: ${nextTagIndex}`
-            );
-          }
-
-          while (containedTags > 0) {
-            closingTagIndex = bufferedMessage.indexOf(
-              `</${firstTagName}>`,
-              closingTagIndex + 1
-            );
-            containedTags--;
-            console.log(
-              `Updated Closing Tag Index: ${closingTagIndex}, Contained Tags Left: ${containedTags}`
-            );
-          }
-
-          const firstTagEnd = closingTagIndex + `</${firstTagName}>`.length;
-          const completeMessage = bufferedMessage.substring(0, firstTagEnd);
-          bufferedMessage = bufferedMessage.substring(firstTagEnd);
-
-          console.log(`Complete Message: ${completeMessage}`);
-          await this.parseStringPromise(completeMessage);
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    });
-
-    this.socket.once("error", (error) => {
-      console.log(error);
     });
   }
 
@@ -460,8 +382,6 @@ export class XmppClient {
       }
     }
 
-    Logger.default({ friendList });
-    Logger.default({ pendingFriends });
     this.callCallback(EventCallbackName.XMPP_FRIENDLIST_UPDATED, friendList);
     this.callCallback(
       EventCallbackName.XMPP_PENDING_FRIENDS_UPDATED,
@@ -486,7 +406,6 @@ export class XmppClient {
     const theirJid = removeRcPart(this.lastChatHistoryFriendJid);
     this.callCallback(EventCallbackName.XMPP_MY_JID_UPDATE, myJid);
     if (!conversation?.message?.length) {
-      Logger.default({ chatHistory });
       this.callCallback(EventCallbackName.XMPP_CHAT_HISTORY_UPDATED, {
         chatHistory,
         friendJid: theirJid,
@@ -505,11 +424,15 @@ export class XmppClient {
       chatHistory.push({ id, content, receiver, sender, timestamp, type });
     });
 
-    Logger.default({ chatHistory });
     this.callCallback(EventCallbackName.XMPP_CHAT_HISTORY_UPDATED, {
       chatHistory,
       friendJid: theirJid,
     });
+
+    this.callCallback(
+      EventCallbackName.XMPP_CHAT_LAST_READ_UPDATED,
+      conversation?.reader?.$?.read
+    );
   }
 
   private handleMessageReceived(data) {

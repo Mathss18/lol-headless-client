@@ -74,13 +74,13 @@ const main = async () => {
 
   await hc.createLobby(); // Create a new Lobby
 
-  await hc.changePartyType("open"); // Set lobby to open
+  // await hc.changePartyType("open"); // Set lobby to open (WORK IN PROGESS - DONT USE IT)
 
   await hc.selectGamemode({ gamemode: Gamemode.RANKED_SOLO_DUO }); // Select RANKED_SOLO_DUO gamemode
 
   await hc.selectRoles({ roles: [Role.MID, Role.TOP] }); // Select you roles
 
-  await hc.findMatch({}); // Start to find a match
+  await hc.findMatch({ summonerSpells: [SummonerSpell.FLASH, SummonerSpell.IGNITE] }); // Start to find a match
 
   hc.banChampion({ champion: Champion.YUUMI }); // Ban a champion
 

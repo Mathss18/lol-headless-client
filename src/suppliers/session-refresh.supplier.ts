@@ -1,13 +1,19 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
 export class SessionRefreshSupplier {
-  readonly URL = `${getRegion(this.region).playerPlatformEdgeUrl}/session-external/v1/session/refresh`;
+  readonly URL = `${
+    getRegion(this.region).playerPlatformEdgeUrl
+  }/session-external/v1/session/refresh`;
 
-  constructor(private apiRequest: ApiRequest, private jwt: string, private region: Region) {
+  constructor(
+    private apiRequest: ApiRequest,
+    private jwt: string,
+    private region: Region,
+    private clientVersion: string
+  ) {
     this.apiRequest = apiRequest;
   }
 
@@ -26,7 +32,7 @@ export class SessionRefreshSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-league-session)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-league-session)`,
     };
 
     return headers;

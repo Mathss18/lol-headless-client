@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
+import { VersionHelper } from "../helpers/version.helper";
 
 export class EntitlementSupplier {
   readonly URL = "https://entitlements.auth.riotgames.com/api/token/v1";
@@ -24,7 +24,7 @@ export class EntitlementSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `RiotClient/${VersionSupplier.versionDll} entitlements (Windows;10;;Home Single Language, x64) riot_client/0`,
+      "User-Agent": `RiotGamesApi/${VersionHelper.versionDll} entitlements (Windows;10;;Home Single Language, x64) riot_client/0`,
     };
 
     return headers;

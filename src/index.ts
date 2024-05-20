@@ -11,6 +11,7 @@ import {
 } from "./services/xmpp/xmpp.client.service";
 import { PublicTokens } from "./client/VirtualClient";
 import { UserData } from "./suppliers/user-data.supplier";
+import { SummonerSpell } from "./enums/summoner-spell.enum";
 
 export {
   HeadlessClient,
@@ -25,4 +26,5 @@ export {
   UserData,
   Message,
   Friend,
+  SummonerSpell,
 };

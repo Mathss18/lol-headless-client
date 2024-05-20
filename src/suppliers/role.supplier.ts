@@ -1,6 +1,5 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { Role } from "src/enums/role.enum";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
@@ -14,7 +13,8 @@ export class RoleSupplier {
     private partyId: string,
     private puuid: string,
     private roles: Role[],
-    private region: Region
+    private region: Region,
+    private clientVersion: string,
   ) {
     this.apiRequest = apiRequest;
   }
@@ -34,7 +34,7 @@ export class RoleSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`,
     };
 
     return headers;

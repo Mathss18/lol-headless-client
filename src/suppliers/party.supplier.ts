@@ -1,6 +1,5 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
@@ -18,7 +17,9 @@ export class PartySupplier {
     private inventoryToken: string,
     private partyUserToken: string,
     private userInfoJwt: string,
-    private region: Region
+    private region: Region,
+    private gameVersion: string,
+    private clientVersion: string,
   ) {
     this.apiRequest = apiRequest;
   }
@@ -38,7 +39,7 @@ export class PartySupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`,
     };
 
     return headers;
@@ -55,7 +56,7 @@ export class PartySupplier {
       puuid: this.puuid,
       registration: {
         experiments: {},
-        gameClientVersion: VersionSupplier.gameVersion,
+        gameClientVersion: this.gameVersion,
         inventoryToken: null,
         inventoryTokens: [""],
         playerTokens: {

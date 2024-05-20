@@ -1,5 +1,5 @@
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
+import { VersionHelper } from "../helpers/version.helper";
 import { v4 as uuidv4 } from "uuid";
 import base64url from "base64url";
 import { AxiosResponse } from "axios";
@@ -37,7 +37,7 @@ export class CookieSupplier {
       "Content-Type": "application/json",
       Accept: "application/json",
       Pragma: "no-cache",
-      "User-Agent": `RiotClient/${VersionSupplier.version} rso-auth (Windows;10;;Professional, x64)`,
+      "User-Agent": `RiotClient/${VersionHelper.version} rso-auth (Windows;10;;Professional, x64)`,
     };
     if (this._additionalCookie) {
       headers["Cookie"] = this._additionalCookie;

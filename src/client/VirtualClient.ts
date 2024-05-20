@@ -32,6 +32,7 @@ import { Region } from "../enums/region.enum";
 import { EventCallbackName } from "../enums/event-callback-name.enum";
 import { CallbackEvent } from "../main";
 import { PartyTypeSupplier } from "../suppliers/party-type.supplier";
+import { VersionSupplier } from "../suppliers/version.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -52,6 +53,8 @@ export class VirtualClient {
   private _partyUserToken: string;
   private _region: Region;
   private _partyType: string | undefined;
+  public gameVersion: string | undefined;
+  public clientVersion: string | undefined;
   private _callback: (data: CallbackEvent) => void;
 
   constructor() {
@@ -67,6 +70,8 @@ export class VirtualClient {
     password: string,
     region: Region = Region.BR
   ) {
+    this.gameVersion = await this.getGameVersion(region);
+    this.clientVersion = await this.getClientVersion();
     Logger.green("Starting login process... \n");
     Logger.green(`Selected Region: ${getRegion(region).name} \n`);
     this._username = username;
@@ -138,7 +143,8 @@ export class VirtualClient {
       this._apiRequest,
       this._sessionToken,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await partyUserTokenSupplier.makeRequest({});
     Logger.cyan(`[Party User Token]: ${data} \n`);
@@ -152,7 +158,8 @@ export class VirtualClient {
       this._apiRequest,
       this._sessionToken,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
     await unregisterSupplier.makeRequest({});
     this.callCallback(EventCallbackName.VIRTUAL_CLIENT_LOBBY_UNREGISTERED);
@@ -170,7 +177,9 @@ export class VirtualClient {
       this._inventoryToken,
       this._partyUserToken,
       this._userInfoToken,
-      this._region
+      this._region,
+      this.gameVersion,
+      this.clientVersion
     );
 
     const { data } = await partySupplier.makeRequest({});
@@ -189,11 +198,12 @@ export class VirtualClient {
       this._lolToken,
       this._partyId,
       type,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await partyTypeSupplier.makeRequest({});
     Logger.cyan(`[Party Type Supplier]: ${data} \n`);
-    this.callCallback(EventCallbackName.VIRTUAL_CLIENT_USER_INFO_TOKEN, data);
+    // this.callCallback(EventCallbackName.VIRTUAL_CLIENT_USER_INFO_TOKEN, data);
     this._partyType = type;
     return data;
   }
@@ -205,7 +215,8 @@ export class VirtualClient {
       this._sessionToken,
       this._partyId,
       gamemode,
-      this._region
+      this._region,
+      this.clientVersion
     );
 
     const { data } = await gamemodeSupplier.makeRequest({});
@@ -224,7 +235,8 @@ export class VirtualClient {
       this._partyId,
       this._userData.sub,
       roles,
-      this._region
+      this._region,
+      this.clientVersion
     );
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -240,7 +252,8 @@ export class VirtualClient {
       this._sessionToken,
       this._partyId,
       this._userData.sub,
-      this._region
+      this._region,
+      this.clientVersion
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
@@ -310,7 +323,8 @@ export class VirtualClient {
       this._userData.id,
       this._inventoryToken,
       summonerSpells,
-      this._region
+      this._region,
+      this.clientVersion
     );
 
     const { data } = await startMatchSupplier.makeRequest({});
@@ -366,7 +380,8 @@ export class VirtualClient {
       this._sessionToken,
       this._userData.sub,
       this._userData.accountId,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await inventorySupplier.makeRequest({});
     Logger.cyan(`[Inventory token]: ${data.data.itemsJwt} \n`);
@@ -402,7 +417,8 @@ export class VirtualClient {
       this._lolToken,
       this._entitlementsToken,
       this._userInfoToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
 
     const { data } = await queueSupplier.makeRequest({});
@@ -416,7 +432,8 @@ export class VirtualClient {
       this._apiRequest,
       this._queueToken,
       new RiotClientUser(this._riotToken).getSub(),
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await sessionSupplier.makeRequest({});
     Logger.cyan(`[Session Token]: ${data} \n`);
@@ -434,11 +451,34 @@ export class VirtualClient {
     return data;
   }
 
+  private async getGameVersion(region: Region) {
+    const versionSupplier = new VersionSupplier(this._apiRequest, region);
+    const { data } = await versionSupplier.makeRequest({});
+    const gameVersion = data.releases[0].compat_version.id;
+    Logger.cyan(`[Game Version]: ${gameVersion} \n`);
+    this.callCallback(
+      EventCallbackName.VIRTUAL_CLIENT_GAME_VERSION,
+      gameVersion
+    );
+    return gameVersion;
+  }
+
+  private async getClientVersion() {
+    const clientVersion = "14.10.584.5961";
+    Logger.cyan(`[Client Version]: ${clientVersion} \n`);
+    this.callCallback(
+      EventCallbackName.VIRTUAL_CLIENT_CLIENT_VERSION,
+      clientVersion
+    );
+    return clientVersion;
+  }
+
   private async getSipt() {
     const siptSupplier = new SiptSupplier(
       this._apiRequest,
       this._sessionToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await siptSupplier.makeRequest({});
     Logger.cyan(`[Sipt Token]: ${data} \n`);
@@ -452,7 +492,8 @@ export class VirtualClient {
       this._apiRequest,
       this._sessionToken,
       new RiotClientUser(this._riotToken).getSub(),
-      this._region
+      this._region,
+      this.clientVersion
     );
     const data = await userDataSupplier.makeRequest({});
     Logger.cyan(`[User Data]:\n`);
@@ -469,7 +510,8 @@ export class VirtualClient {
     const sessionRefreshSupplier = new SessionRefreshSupplier(
       this._apiRequest,
       this._sessionToken,
-      this._region
+      this._region,
+      this.clientVersion
     );
     const { data } = await sessionRefreshSupplier.makeRequest({});
     Logger.cyan(`[(REFRESH) Session Token]: ${data} \n`);

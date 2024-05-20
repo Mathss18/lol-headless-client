@@ -1,5 +1,4 @@
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
 
@@ -26,7 +25,8 @@ export class UserDataSupplier {
     private apiRequest: ApiRequest,
     private jwt: string,
     private puuid: string,
-    private region: Region
+    private region: Region,
+    private clientVersion: string
   ) {
     this.apiRequest = apiRequest;
     this.URL = `${
@@ -53,7 +53,7 @@ export class UserDataSupplier {
   public get headers() {
     const headers = {
       Authorization: `Bearer ${this.jwt}`,
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-summoner)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-summoner)`,
     };
 
     return headers;

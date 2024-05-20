@@ -1,6 +1,5 @@
 import { AxiosResponse } from "axios";
 import { ApiRequest } from "src/services/http/api-request";
-import { VersionSupplier } from "../helpers/version.helper";
 import { SummonerSpell } from "../enums/summoner-spell.enum";
 import { getRegion } from "../config/regions";
 import { Region } from "../enums/region.enum";
@@ -15,7 +14,8 @@ export class AcceptMatchSupplier {
     private summonerId: number,
     private inventoryToken: string,
     private summonerSpells: SummonerSpell[],
-    private region: Region
+    private region: Region,
+    private clientVersion: string,
   ) {
     this.apiRequest = apiRequest;
   }
@@ -35,7 +35,7 @@ export class AcceptMatchSupplier {
       Authorization: `Bearer ${this.jwt}`,
       Accept: "application/json",
       "Content-Type": "application/json",
-      "User-Agent": `LeagueOfLegendsClient/${VersionSupplier.clientVersion} (rcp-be-lol-lobby)`,
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`,
     };
 
     return headers;
