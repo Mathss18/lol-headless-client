@@ -6,7 +6,7 @@ import { AMFDecoder } from "./amf/amf-decoder";
 import { RtmpClient } from "./rtmp-client.service";
 import { RtmpPacket } from "./rtmp-packet";
 import TypedObject from "./typed-object";
-// import { gunzipSync } from "zlib";
+import { ungzip } from "pako";
 
 export class RtmpPacketReader {
   public packets: Map<string, TypedObject> = new Map();
@@ -188,9 +188,9 @@ export class RtmpPacketReader {
 
   private decodeGzipBase64(input: string): any {
     const buffer = Buffer.from(input, "base64");
-    // const decompressed = gunzipSync(buffer);
-    const decompressed = buffer;
-    return JSON.parse(decompressed.toString());
+    const decompressed = ungzip(buffer);
+    const decompressedString = new TextDecoder().decode(decompressed);
+    return JSON.parse(decompressedString);
   }
 
   private myBanPhaseActions(actionSetList: any[], myCellId: number): void {
