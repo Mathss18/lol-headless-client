@@ -2,12 +2,7 @@ import * as tls from "tls";
 import { Logger } from "../../utils/logger.util";
 import { setTimeout as sleep } from "timers/promises";
 import { parseString } from "xml2js";
-import {
-  BASE_PLAYER_INFO,
-  generateRandomDigitsForChat,
-  getFormattedDate,
-  removeRcPart,
-} from "./xmpp.utils";
+import { BASE_PLAYER_INFO, generateRandomDigitsForChat, getFormattedDate, removeRcPart } from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
 import { getRegion } from "../../config/regions";
 import { CallbackEvent } from "../../main";
@@ -173,9 +168,7 @@ export class XmppClient {
 
   public async sendMessage(message: string, jid: string) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(
-      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
-    );
+    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
   }
 
   public async markChatHistoryAsRead(jid: string) {
@@ -198,9 +191,7 @@ export class XmppClient {
   }
 
   public async getFriendList() {
-    await this.write(
-      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
-    );
+    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
   }
 
   private async sendAuthMessages(): Promise<void> {
@@ -227,42 +218,22 @@ export class XmppClient {
 
       while (true) {
         let completeMessage = null;
+        const messageTypes = [
+          "</stream:stream>",
+          "</stream:features>",
+          "</iq>",
+          "</success>",
+          "</presence>",
+          "</message>",
+        ];
 
-        // Check for <stream:stream> message
-        if (bufferedMessage.includes("</stream:stream>")) {
-          const endIndex =
-            bufferedMessage.indexOf("</stream:stream>") +
-            "</stream:stream>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        }
-        // Check for <stream:features> message
-        else if (bufferedMessage.includes("</stream:features>")) {
-          const endIndex =
-            bufferedMessage.indexOf("</stream:features>") +
-            "</stream:features>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        }
-        // Check for <iq> message
-        else if (bufferedMessage.includes("</iq>")) {
-          const endIndex = bufferedMessage.indexOf("</iq>") + "</iq>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        }
-        // Check for <success> message
-        else if (bufferedMessage.includes("</success>")) {
-          const endIndex =
-            bufferedMessage.indexOf("</success>") + "</success>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        }
-        // Check for <presence> message
-        else if (bufferedMessage.includes("</presence>")) {
-          const endIndex =
-            bufferedMessage.indexOf("</presence>") + "</presence>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
+        for (const messageType of messageTypes) {
+          if (bufferedMessage.includes(messageType)) {
+            const endIndex = bufferedMessage.indexOf(messageType) + messageType.length;
+            completeMessage = bufferedMessage.slice(0, endIndex);
+            bufferedMessage = bufferedMessage.slice(endIndex);
+            break;
+          }
         }
 
         // No complete message found, exit the loop
@@ -273,7 +244,9 @@ export class XmppClient {
         try {
           // Process the complete XML message
           await this.parseStringPromise(completeMessage);
-        } catch (error) {}
+        } catch (error) {
+          console.log(error);
+        }
       }
     });
   }
@@ -355,14 +328,9 @@ export class XmppClient {
 
     for (const player of players) {
       const { jid, puuid, name, subscription } = player?.$;
-      const state =
-        Array.isArray(player?.state) && player.state.length > 0
-          ? player.state[0]
-          : "";
+      const state = Array.isArray(player?.state) && player.state.length > 0 ? player.state[0] : "";
       const lastOnline =
-        Array.isArray(player?.last_online) && player.last_online.length > 0
-          ? player.last_online[0]
-          : "";
+        Array.isArray(player?.last_online) && player.last_online.length > 0 ? player.last_online[0] : "";
       const internalName = player?.id?.[0]?.$?.name ?? "";
       const tagline = player?.id?.[0]?.$?.tagline ?? "";
       const friend = {
@@ -383,10 +351,7 @@ export class XmppClient {
     }
 
     this.callCallback(EventCallbackName.XMPP_FRIENDLIST_UPDATED, friendList);
-    this.callCallback(
-      EventCallbackName.XMPP_PENDING_FRIENDS_UPDATED,
-      pendingFriends
-    );
+    this.callCallback(EventCallbackName.XMPP_PENDING_FRIENDS_UPDATED, pendingFriends);
   }
 
   private handlePresense(presence) {
@@ -429,10 +394,7 @@ export class XmppClient {
       friendJid: theirJid,
     });
 
-    this.callCallback(
-      EventCallbackName.XMPP_CHAT_LAST_READ_UPDATED,
-      conversation?.reader?.$?.read
-    );
+    this.callCallback(EventCallbackName.XMPP_CHAT_LAST_READ_UPDATED, conversation?.reader?.$?.read);
   }
 
   private handleMessageReceived(data) {
