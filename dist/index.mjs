@@ -2782,7 +2782,7 @@ var RtmpPacket = class {
 };
 
 // src/services/rtmp/rtmp-packet-reader.ts
-import { gunzipSync } from "zlib";
+import { gunzipSync } from "browserify-zlib";
 var RtmpPacketReader = class {
   constructor(client) {
     this.client = client;

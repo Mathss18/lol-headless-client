@@ -2823,7 +2823,7 @@ var RtmpPacket = class {
 };
 
 // src/services/rtmp/rtmp-packet-reader.ts
-var import_zlib = require("zlib");
+var import_browserify_zlib = require("browserify-zlib");
 var RtmpPacketReader = class {
   constructor(client) {
     this.client = client;
@@ -2980,7 +2980,7 @@ var RtmpPacketReader = class {
   }
   decodeGzipBase64(input) {
     const buffer = Buffer.from(input, "base64");
-    const decompressed = (0, import_zlib.gunzipSync)(buffer);
+    const decompressed = (0, import_browserify_zlib.gunzipSync)(buffer);
     return JSON.parse(decompressed.toString());
   }
   myBanPhaseActions(actionSetList, myCellId) {
