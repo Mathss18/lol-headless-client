@@ -6,7 +6,7 @@ import { AMFDecoder } from "./amf/amf-decoder";
 import { RtmpClient } from "./rtmp-client.service";
 import { RtmpPacket } from "./rtmp-packet";
 import TypedObject from "./typed-object";
-import { gunzipSync } from "browserify-zlib";
+// import { gunzipSync } from "zlib";
 
 export class RtmpPacketReader {
   public packets: Map<string, TypedObject> = new Map();
@@ -188,7 +188,8 @@ export class RtmpPacketReader {
 
   private decodeGzipBase64(input: string): any {
     const buffer = Buffer.from(input, "base64");
-    const decompressed = gunzipSync(buffer);
+    // const decompressed = gunzipSync(buffer);
+    const decompressed = buffer;
     return JSON.parse(decompressed.toString());
   }
 

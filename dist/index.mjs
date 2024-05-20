@@ -2782,7 +2782,6 @@ var RtmpPacket = class {
 };
 
 // src/services/rtmp/rtmp-packet-reader.ts
-import { gunzipSync } from "browserify-zlib";
 var RtmpPacketReader = class {
   constructor(client) {
     this.client = client;
@@ -2939,7 +2938,7 @@ var RtmpPacketReader = class {
   }
   decodeGzipBase64(input) {
     const buffer = Buffer.from(input, "base64");
-    const decompressed = gunzipSync(buffer);
+    const decompressed = buffer;
     return JSON.parse(decompressed.toString());
   }
   myBanPhaseActions(actionSetList, myCellId) {
