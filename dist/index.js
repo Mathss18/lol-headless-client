@@ -3752,9 +3752,7 @@ var XmppClient = class {
   }
   async sendMessage(message, jid) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(
-      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
-    );
+    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
   }
   async markChatHistoryAsRead(jid) {
     jid = removeRcPart(jid);
@@ -3774,9 +3772,7 @@ var XmppClient = class {
     );
   }
   async getFriendList() {
-    await this.write(
-      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
-    );
+    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
   }
   async sendAuthMessages() {
     return new Promise(async (resolve) => {
@@ -3799,26 +3795,21 @@ var XmppClient = class {
       }
       while (true) {
         let completeMessage = null;
-        if (bufferedMessage.includes("</stream:stream>")) {
-          const endIndex = bufferedMessage.indexOf("</stream:stream>") + "</stream:stream>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        } else if (bufferedMessage.includes("</stream:features>")) {
-          const endIndex = bufferedMessage.indexOf("</stream:features>") + "</stream:features>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        } else if (bufferedMessage.includes("</iq>")) {
-          const endIndex = bufferedMessage.indexOf("</iq>") + "</iq>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        } else if (bufferedMessage.includes("</success>")) {
-          const endIndex = bufferedMessage.indexOf("</success>") + "</success>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
-        } else if (bufferedMessage.includes("</presence>")) {
-          const endIndex = bufferedMessage.indexOf("</presence>") + "</presence>".length;
-          completeMessage = bufferedMessage.slice(0, endIndex);
-          bufferedMessage = bufferedMessage.slice(endIndex);
+        const messageTypes = [
+          "</stream:stream>",
+          "</stream:features>",
+          "</iq>",
+          "</success>",
+          "</presence>",
+          "</message>"
+        ];
+        for (const messageType of messageTypes) {
+          if (bufferedMessage.includes(messageType)) {
+            const endIndex = bufferedMessage.indexOf(messageType) + messageType.length;
+            completeMessage = bufferedMessage.slice(0, endIndex);
+            bufferedMessage = bufferedMessage.slice(endIndex);
+            break;
+          }
         }
         if (!completeMessage) {
           break;
@@ -3826,6 +3817,7 @@ var XmppClient = class {
         try {
           await this.parseStringPromise(completeMessage);
         } catch (error) {
+          console.log(error);
         }
       }
     });
@@ -3923,10 +3915,7 @@ var XmppClient = class {
       }
     }
     this.callCallback("XMPP_FRIENDLIST_UPDATED" /* XMPP_FRIENDLIST_UPDATED */, friendList);
-    this.callCallback(
-      "XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */,
-      pendingFriends
-    );
+    this.callCallback("XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */, pendingFriends);
   }
   handlePresense(presence) {
     const from = presence?.$?.from;
@@ -3964,10 +3953,7 @@ var XmppClient = class {
       chatHistory,
       friendJid: theirJid
     });
-    this.callCallback(
-      "XMPP_CHAT_LAST_READ_UPDATED" /* XMPP_CHAT_LAST_READ_UPDATED */,
-      conversation?.reader?.$?.read
-    );
+    this.callCallback("XMPP_CHAT_LAST_READ_UPDATED" /* XMPP_CHAT_LAST_READ_UPDATED */, conversation?.reader?.$?.read);
   }
   handleMessageReceived(data) {
     const { id, from, to, stamp, type } = data.$;
