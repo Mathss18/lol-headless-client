@@ -2,7 +2,12 @@ import * as tls from "tls";
 import { Logger } from "../../utils/logger.util";
 import { setTimeout as sleep } from "timers/promises";
 import { parseString } from "xml2js";
-import { BASE_PLAYER_INFO, generateRandomDigitsForChat, getFormattedDate, removeRcPart } from "./xmpp.utils";
+import {
+  BASE_PLAYER_INFO,
+  generateRandomDigitsForChat,
+  getFormattedDate,
+  removeRcPart,
+} from "./xmpp.utils";
 import { Region } from "../../enums/region.enum";
 import { getRegion } from "../../config/regions";
 import { CallbackEvent } from "../../main";
@@ -100,8 +105,6 @@ export class XmppClient {
       `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
       `<presence/>`,
     ];
-
-
   }
 
   public listen(callback: (data: CallbackEvent) => void) {
@@ -172,7 +175,9 @@ export class XmppClient {
 
   public async sendMessage(message: string, jid: string) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
+    await this.write(
+      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
+    );
   }
 
   public async markChatHistoryAsRead(jid: string) {
@@ -195,7 +200,9 @@ export class XmppClient {
   }
 
   public async getFriendList() {
-    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
+    await this.write(
+      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
+    );
   }
 
   private async sendAuthMessages(): Promise<void> {
@@ -233,7 +240,8 @@ export class XmppClient {
 
         for (const messageType of messageTypes) {
           if (bufferedMessage.includes(messageType)) {
-            const endIndex = bufferedMessage.indexOf(messageType) + messageType.length;
+            const endIndex =
+              bufferedMessage.indexOf(messageType) + messageType.length;
             completeMessage = bufferedMessage.slice(0, endIndex);
             bufferedMessage = bufferedMessage.slice(endIndex);
             break;
@@ -332,9 +340,14 @@ export class XmppClient {
 
     for (const player of players) {
       const { jid, puuid, name, subscription } = player?.$;
-      const state = Array.isArray(player?.state) && player.state.length > 0 ? player.state[0] : "";
+      const state =
+        Array.isArray(player?.state) && player.state.length > 0
+          ? player.state[0]
+          : "";
       const lastOnline =
-        Array.isArray(player?.last_online) && player.last_online.length > 0 ? player.last_online[0] : "";
+        Array.isArray(player?.last_online) && player.last_online.length > 0
+          ? player.last_online[0]
+          : "";
       const internalName = player?.id?.[0]?.$?.name ?? "";
       const tagline = player?.id?.[0]?.$?.tagline ?? "";
       const friend = {
@@ -355,7 +368,10 @@ export class XmppClient {
     }
 
     this.callCallback(EventCallbackName.XMPP_FRIENDLIST_UPDATED, friendList);
-    this.callCallback(EventCallbackName.XMPP_PENDING_FRIENDS_UPDATED, pendingFriends);
+    this.callCallback(
+      EventCallbackName.XMPP_PENDING_FRIENDS_UPDATED,
+      pendingFriends
+    );
   }
 
   private handlePresense(presence) {
@@ -367,6 +383,12 @@ export class XmppClient {
     Logger.default({ chatShow });
     Logger.default({ chatStatus });
     Logger.default(profileInfo);
+    console.log(profileInfo);
+    console.log(JSON.parse(profileInfo["pty"]));
+    if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
+      const partyInfo = JSON.parse(profileInfo["pty"]);
+      console.log(partyInfo["partyId"]);
+    }
   }
 
   private handleChatHistory(conversation) {
@@ -398,7 +420,10 @@ export class XmppClient {
       friendJid: theirJid,
     });
 
-    this.callCallback(EventCallbackName.XMPP_CHAT_LAST_READ_UPDATED, conversation?.reader?.$?.read);
+    this.callCallback(
+      EventCallbackName.XMPP_CHAT_LAST_READ_UPDATED,
+      conversation?.reader?.$?.read
+    );
   }
 
   private handleMessageReceived(data) {
