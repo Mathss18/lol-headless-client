@@ -76,6 +76,7 @@ export class XmppClient {
   private host = "";
   private port = 5223;
   private xmppRegion = "";
+  private xmppRegionUpper = "";
   private lastChatHistoryFriendJid = "";
   private authMessages: string[] = [];
   private _callback: (data: CallbackEvent) => void;
@@ -86,27 +87,21 @@ export class XmppClient {
     private entitlementsToken: string,
     private region: Region
   ) {
-    const { xmppUrl, regionLower2 } = getRegion(this.region);
+    const { xmppUrl, regionLower2, regionUpper } = getRegion(this.region);
     this.host = xmppUrl;
     this.xmppRegion = regionLower2;
+    this.xmppRegionUpper = regionUpper;
     this.authMessages = [
       `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
-      // ``,
       `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
       `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
-      // `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-3138377969</resource></bind></iq>`,
+      `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-4012164551</resource></bind></iq>`,
       `<iq type="set" id="xmpp_entitlements_0"><entitlements xmlns="urn:riotgames:entitlements"><token>${this.entitlementsToken}</token></entitlements></iq><iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><platform>riot</platform></session></iq>`,
-      // ``,
-      `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"></bind></iq>`,
+      `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
+      `<presence/>`,
     ];
 
-    // `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
-    //   `<auth mechanism="X-Riot-RSO-PAS" xmlns="urn:ietf:params:xml:ns:xmpp-sasl"><rso_token>${this.rsoToken}</rso_token><pas_token>${this.pasToken}</pas_token></auth>`,
-    //   `<?xml version="1.0" encoding="UTF-8"?><stream:stream to="${this.xmppRegion}.pvp.net" xml:lang="en" version="1.0" xmlns="jabber:client" xmlns:stream="http://etherx.jabber.org/streams">`,
-    //   `<iq id="_xmpp_bind1" type="set"><bind xmlns="urn:ietf:params:xml:ns:xmpp-bind"><puuid-mode enabled="true"/><resource>RC-3138377969</resource></bind></iq>`,
-    //   `<iq type="set" id="xmpp_entitlements_0"><entitlements xmlns="urn:riotgames:entitlements"><token>${this.entitlementsToken}</token></entitlements></iq><iq id="_xmpp_session1" type="set"><session xmlns="urn:ietf:params:xml:ns:xmpp-session"><platform>riot</platform></session></iq>`,
-    //   `<iq type="get" id="1"><query xmlns="jabber:iq:riotgames:roster" last_state="true"/></iq><iq type="get" id="privacy_update_2"><query xmlns="jabber:iq:privacy"><list name="LOL"/></query></iq><iq type="get" id="recent_convos_3"><query xmlns="jabber:iq:riotgames:archive:list"/></iq><iq id='update_session_active_4' type='set'><query xmlns='jabber:iq:riotgames:session'><session mode='active'/></query></iq><presence id='presence_5'><show>chat</show><status></status><games><keystone><st>chat</st><s.t>1715443396510</s.t><m></m><s.p>keystone</s.p><pty/></keystone></games></presence>`,
-    //   `<presence/>`,
+
   }
 
   public listen(callback: (data: CallbackEvent) => void) {
@@ -171,7 +166,7 @@ export class XmppClient {
     const info = JSON.stringify(playerInfo);
     const now = Date.now();
     await this.write(
-      `<presence id='presence_1'><show>chat</show><status>${statusMessage}</status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>BR1</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>${info}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
+      `<presence id='presence_1'><show>chat</show><status>${statusMessage}</status><games><keystone><st>chat</st><s.t>${now}</s.t><m></m><s.p>keystone</s.p><pty/></keystone><league_of_legends><s.r>${this.xmppRegionUpper}</s.r><st>${status}</st><s.t>${now}</s.t><m></m><p>${info}</p><s.p>league_of_legends</s.p><s.c>live</s.c><pty/></league_of_legends></games></presence>`
     );
   }
 
