@@ -3713,7 +3713,9 @@ var XmppClient = class {
   }
   async sendMessage(message, jid) {
     const id = generateRandomDigitsForChat(13);
-    await this.write(`<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`);
+    await this.write(
+      `<message id="${id}:1" to="${jid}" type="chat"><body>${message}</body></message>`
+    );
   }
   async markChatHistoryAsRead(jid) {
     jid = removeRcPart(jid);
@@ -3733,7 +3735,9 @@ var XmppClient = class {
     );
   }
   async getFriendList() {
-    await this.write(`<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`);
+    await this.write(
+      `<iq type="get" id="2"><query xmlns="jabber:iq:riotgames:roster" last_state="true" /></iq>`
+    );
   }
   async sendAuthMessages() {
     return new Promise(async (resolve) => {
@@ -3876,7 +3880,10 @@ var XmppClient = class {
       }
     }
     this.callCallback("XMPP_FRIENDLIST_UPDATED" /* XMPP_FRIENDLIST_UPDATED */, friendList);
-    this.callCallback("XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */, pendingFriends);
+    this.callCallback(
+      "XMPP_PENDING_FRIENDS_UPDATED" /* XMPP_PENDING_FRIENDS_UPDATED */,
+      pendingFriends
+    );
   }
   handlePresense(presence) {
     const from = presence?.$?.from;
@@ -3887,6 +3894,12 @@ var XmppClient = class {
     Logger.default({ chatShow });
     Logger.default({ chatStatus });
     Logger.default(profileInfo);
+    console.log(profileInfo);
+    console.log(JSON.parse(profileInfo["pty"]));
+    if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
+      const partyInfo = JSON.parse(profileInfo["pty"]);
+      console.log(partyInfo["partyId"]);
+    }
   }
   handleChatHistory(conversation) {
     const chatHistory = [];
@@ -3914,7 +3927,10 @@ var XmppClient = class {
       chatHistory,
       friendJid: theirJid
     });
-    this.callCallback("XMPP_CHAT_LAST_READ_UPDATED" /* XMPP_CHAT_LAST_READ_UPDATED */, conversation?.reader?.$?.read);
+    this.callCallback(
+      "XMPP_CHAT_LAST_READ_UPDATED" /* XMPP_CHAT_LAST_READ_UPDATED */,
+      conversation?.reader?.$?.read
+    );
   }
   handleMessageReceived(data) {
     const { id, from, to, stamp, type } = data.$;
