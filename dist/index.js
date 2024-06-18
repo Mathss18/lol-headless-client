@@ -1880,7 +1880,7 @@ var VirtualClient = class {
     return gameVersion;
   }
   async getClientVersion() {
-    const clientVersion = "14.10.584.5961";
+    const clientVersion = "14.12.595.2083";
     Logger.cyan(`[Client Version]: ${clientVersion} 
 `);
     this.callCallback(
