@@ -464,7 +464,7 @@ export class VirtualClient {
   }
 
   private async getClientVersion() {
-    const clientVersion = "14.10.584.5961";
+    const clientVersion = "14.12.595.2083";
     Logger.cyan(`[Client Version]: ${clientVersion} \n`);
     this.callCallback(
       EventCallbackName.VIRTUAL_CLIENT_CLIENT_VERSION,
