@@ -3886,19 +3886,23 @@ var XmppClient = class {
     );
   }
   handlePresense(presence) {
-    const from = presence?.$?.from;
-    const chatShow = presence?.show?.[0];
-    const chatStatus = presence?.status?.[0];
-    const profileInfo = presence?.games?.[0]?.league_of_legends?.[0]?.p?.[0];
-    Logger.default({ from });
-    Logger.default({ chatShow });
-    Logger.default({ chatStatus });
-    Logger.default(profileInfo);
-    console.log(profileInfo);
-    console.log(JSON.parse(profileInfo["pty"]));
-    if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
-      const partyInfo = JSON.parse(profileInfo["pty"]);
-      console.log(partyInfo["partyId"]);
+    try {
+      const from = presence?.$?.from;
+      const chatShow = presence?.show?.[0];
+      const chatStatus = presence?.status?.[0];
+      const profileInfo = presence?.games?.[0]?.league_of_legends?.[0]?.p?.[0];
+      Logger.default({ from });
+      Logger.default({ chatShow });
+      Logger.default({ chatStatus });
+      if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
+        const parsedObject = JSON.parse(profileInfo);
+        const ptyString = parsedObject.pty;
+        const ptyObject = JSON.parse(ptyString);
+        const partyId = ptyObject.partyId;
+        console.log({ friend: from.split("@")[0] });
+        console.log({ partyId });
+      }
+    } catch (error) {
     }
   }
   handleChatHistory(conversation) {
