@@ -1516,6 +1516,38 @@ var VersionSupplier = class {
   }
 };
 
+// src/suppliers/join-lobby.supplier.ts
+var JoinLobbySupplier = class {
+  constructor(apiRequest, jwt, partyId, puuid, region, clientVersion) {
+    this.apiRequest = apiRequest;
+    this.jwt = jwt;
+    this.partyId = partyId;
+    this.puuid = puuid;
+    this.region = region;
+    this.clientVersion = clientVersion;
+    this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
+    this.apiRequest = apiRequest;
+  }
+  async makeRequest({ method = "POST" }) {
+    const response = await this.apiRequest.request({
+      url: `${this.URL}/${this.partyId}/members/${this.puuid}/role`,
+      method,
+      headers: this.headers,
+      body: "MEMBER"
+    });
+    return response;
+  }
+  get headers() {
+    const headers = {
+      Authorization: `Bearer ${this.jwt}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": `LeagueOfLegendsClient/${this.clientVersion} (rcp-be-lol-lobby)`
+    };
+    return headers;
+  }
+};
+
 // src/client/VirtualClient.ts
 var VirtualClient = class {
   constructor() {
@@ -1718,6 +1750,18 @@ var VirtualClient = class {
     }
     stopSpinner(spin);
     return accepted;
+  }
+  async joinOpenParty(friendPuuid, partyId) {
+    const joinLobbySupplier = new JoinLobbySupplier(
+      this._apiRequest,
+      this._sessionToken,
+      partyId,
+      friendPuuid,
+      this._region,
+      this.clientVersion
+    );
+    const { data } = await joinLobbySupplier.makeRequest({});
+    console.log({ data });
   }
   getPartyId() {
     return this._partyId;
@@ -3684,6 +3728,12 @@ var XmppClient = class {
     this.xmppRegionUpper = "";
     this.lastChatHistoryFriendJid = "";
     this.authMessages = [];
+    this.joinOpenPartyInfo = {
+      active: false,
+      friendPuuid: "",
+      resolvePromise: null
+    };
+    this.joinOpenPartyPartyId = "";
     const { xmppUrl, regionLower2, regionUpper } = getRegion(this.region);
     this.host = xmppUrl;
     this.xmppRegion = regionLower2;
@@ -3926,6 +3976,13 @@ var XmppClient = class {
       pendingFriends
     );
   }
+  async joinOpenParty(friendPuuid) {
+    this.joinOpenPartyInfo.active = true;
+    this.joinOpenPartyInfo.friendPuuid = friendPuuid;
+    return new Promise((resolve) => {
+      this.joinOpenPartyInfo.resolvePromise = resolve;
+    });
+  }
   handlePresense(presence) {
     try {
       const from = presence?.$?.from;
@@ -3935,13 +3992,19 @@ var XmppClient = class {
       Logger.default({ from });
       Logger.default({ chatShow });
       Logger.default({ chatStatus });
-      if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
+      if (this.joinOpenPartyInfo.active && from.split("@")[0] === this.joinOpenPartyInfo.friendPuuid) {
         const parsedObject = JSON.parse(profileInfo);
         const ptyString = parsedObject.pty;
         const ptyObject = JSON.parse(ptyString);
         const partyId = ptyObject.partyId;
         console.log({ friend: from.split("@")[0] });
         console.log({ partyId });
+        if (this.joinOpenPartyInfo.resolvePromise) {
+          console.log("Joining...");
+          this.joinOpenPartyInfo.resolvePromise(partyId);
+          this.joinOpenPartyInfo.resolvePromise = null;
+          this.joinOpenPartyInfo.active = false;
+        }
       }
     } catch (error) {
     }
@@ -4038,6 +4101,11 @@ var HeadlessClient = class {
   }
   async sendMessage({ message, jid }) {
     await this.xmppClient.sendMessage(message, jid);
+  }
+  joinOpenParty({ friendPuuid }) {
+    this.xmppClient.joinOpenParty(friendPuuid).then(async (partyId) => {
+      await this.virtualClient.joinOpenParty(friendPuuid, partyId);
+    });
   }
   async setInfo({
     status,

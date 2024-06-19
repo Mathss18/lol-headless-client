@@ -359,6 +359,9 @@ declare class HeadlessClient {
         message: string;
         jid: string;
     }): Promise<void>;
+    joinOpenParty({ friendPuuid }: {
+        friendPuuid: string;
+    }): void;
     setInfo({ status, statusMessage, playerInfo, }: {
         status: ChatStatus;
         statusMessage?: string;
