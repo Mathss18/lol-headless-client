@@ -84,6 +84,12 @@ export class XmppClient {
   private xmppRegionUpper = "";
   private lastChatHistoryFriendJid = "";
   private authMessages: string[] = [];
+  private joinOpenPartyInfo = {
+    active: false,
+    friendPuuid: "",
+    resolvePromise: null as ((partyId: string) => void) | null,
+  };
+  private joinOpenPartyPartyId = "";
   private _callback: (data: CallbackEvent) => void;
 
   constructor(
@@ -374,6 +380,14 @@ export class XmppClient {
     );
   }
 
+  public async joinOpenParty(friendPuuid: string) {
+    this.joinOpenPartyInfo.active = true;
+    this.joinOpenPartyInfo.friendPuuid = friendPuuid;
+    return new Promise<string>((resolve) => {
+      this.joinOpenPartyInfo.resolvePromise = resolve;
+    });
+  }
+
   private handlePresense(presence) {
     try {
       const from = presence?.$?.from;
@@ -383,13 +397,22 @@ export class XmppClient {
       Logger.default({ from });
       Logger.default({ chatShow });
       Logger.default({ chatStatus });
-      if (from.split("@")[0] === "56acf181-e58f-58f8-906d-9fee36d5ebfe") {
+      if (
+        this.joinOpenPartyInfo.active &&
+        from.split("@")[0] === this.joinOpenPartyInfo.friendPuuid
+      ) {
         const parsedObject = JSON.parse(profileInfo);
         const ptyString = parsedObject.pty;
         const ptyObject = JSON.parse(ptyString);
         const partyId = ptyObject.partyId;
         console.log({ friend: from.split("@")[0] });
         console.log({ partyId });
+        if (this.joinOpenPartyInfo.resolvePromise) {
+          console.log("Joining...");
+          this.joinOpenPartyInfo.resolvePromise(partyId);
+          this.joinOpenPartyInfo.resolvePromise = null; // clear the resolve function
+          this.joinOpenPartyInfo.active = false; // reset the active flag
+        }
       }
     } catch (error) {}
   }

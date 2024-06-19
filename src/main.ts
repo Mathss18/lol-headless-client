@@ -91,6 +91,12 @@ export class HeadlessClient {
     await this.xmppClient.sendMessage(message, jid);
   }
 
+  public joinOpenParty({ friendPuuid }: { friendPuuid: string }) {
+    this.xmppClient.joinOpenParty(friendPuuid).then(async (partyId) => {
+      await this.virtualClient.joinOpenParty(friendPuuid, partyId);
+    });
+  }
+
   public async setInfo({
     status,
     statusMessage,

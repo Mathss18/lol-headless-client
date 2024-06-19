@@ -33,6 +33,7 @@ import { EventCallbackName } from "../enums/event-callback-name.enum";
 import { CallbackEvent } from "../main";
 import { PartyTypeSupplier } from "../suppliers/party-type.supplier";
 import { VersionSupplier } from "../suppliers/version.supplier";
+import { JoinLobbySupplier } from "../suppliers/join-lobby.supplier";
 
 export class VirtualClient {
   private _apiRequest: ApiRequest;
@@ -287,6 +288,20 @@ export class VirtualClient {
     }
     stopSpinner(spin);
     return accepted;
+  }
+
+  public async joinOpenParty(friendPuuid: string, partyId: string) {
+    const joinLobbySupplier = new JoinLobbySupplier(
+      this._apiRequest,
+      this._sessionToken,
+      partyId,
+      friendPuuid,
+      this._region,
+      this.clientVersion
+    );
+
+    const { data } = await joinLobbySupplier.makeRequest({});
+    console.log({ data });
   }
 
   public getPartyId() {
