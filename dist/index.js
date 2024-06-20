@@ -1528,7 +1528,7 @@ var JoinLobbySupplier = class {
     this.URL = `${getRegion(this.region).leagueEdgeUrl}/parties-ledge/v1/parties`;
     this.apiRequest = apiRequest;
   }
-  async makeRequest({ method = "POST" }) {
+  async makeRequest({ method = "PUT" }) {
     const response = await this.apiRequest.request({
       url: `${this.URL}/${this.partyId}/members/${this.puuid}/role`,
       method,
