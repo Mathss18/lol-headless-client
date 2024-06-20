@@ -19,7 +19,7 @@ export class JoinLobbySupplier {
     this.apiRequest = apiRequest;
   }
 
-  public async makeRequest({ method = "POST" }): Promise<AxiosResponse> {
+  public async makeRequest({ method = "PUT" }): Promise<AxiosResponse> {
     const response = await this.apiRequest.request({
       url: `${this.URL}/${this.partyId}/members/${this.puuid}/role`,
       method: method,
