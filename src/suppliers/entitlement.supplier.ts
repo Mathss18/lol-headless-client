@@ -15,6 +15,14 @@ export class EntitlementSupplier {
       method: method,
       headers: this.headers,
       body: JSON.stringify({ urn: "urn:entitlement:%" }),
+      proxy: {
+        host: "premium-residential.geonode.com",
+        port: 10000,
+        auth: {
+          username: "geonode_linMYKtLsG",
+          password: "",
+        },
+      },
     });
     return response;
   }

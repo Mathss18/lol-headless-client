@@ -28,6 +28,14 @@ export class CookieSupplier {
       method: method,
       headers: this.headers,
       body: body,
+      proxy: {
+        host: "premium-residential.geonode.com",
+        port: 10000,
+        auth: {
+          username: "geonode_linMYKtLsG",
+          password: "",
+        },
+      },
     });
     return response;
   }

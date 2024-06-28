@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, {
+  AxiosProxyConfig,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios-https-proxy-fix";
 import * as https from "https";
 
 interface IRequestParams {
@@ -7,6 +11,7 @@ interface IRequestParams {
   method?: "GET" | "POST" | "PUT" | "DELETE" | string;
   headers?: Record<string, string>;
   body?: any;
+  proxy?: AxiosProxyConfig | false;
   params?: Record<string, string>;
 }
 
@@ -36,17 +41,18 @@ export class ApiRequest {
     headers = {},
     body,
     params,
+    proxy = false,
   }: IRequestParams): Promise<any> {
     try {
       const config: AxiosRequestConfig = {
         method,
         url,
         headers: { "User-Agent": this.userAgent, ...headers },
-        timeout: 600000, //optional
+        timeout: 900000, //optional
         data: body,
-        proxy: false,
-        httpAgent: this.agent,
-        httpsAgent: this.agent,
+        proxy,
+        // httpAgent: this.agent,
+        // httpsAgent: this.agent,
         params,
       };
 

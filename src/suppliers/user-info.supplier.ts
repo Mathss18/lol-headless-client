@@ -14,6 +14,14 @@ export class UserInfoSupplier {
       url: this.URL,
       method: method,
       headers: this.headers,
+      proxy: {
+        host: "premium-residential.geonode.com",
+        port: 10000,
+        auth: {
+          username: "geonode_linMYKtLsG",
+          password: "",
+        },
+      },
     });
     return response;
   }
