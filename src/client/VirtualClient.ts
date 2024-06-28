@@ -323,6 +323,7 @@ export class VirtualClient {
       geopasToken: this._geoPassToken,
       siptToken: this._siptToken,
       partyUserToken: this._partyUserToken,
+      inventoryToken: this._inventoryToken,
     };
   }
 
@@ -446,7 +447,7 @@ export class VirtualClient {
     const sessionSupplier = new SessionSupplier(
       this._apiRequest,
       this._queueToken,
-      new RiotClientUser(this._riotToken).getSub(),
+      new RiotClientUser(this._riotToken).getSub(), // 2243463546
       this._region,
       this.clientVersion
     );
@@ -544,4 +545,5 @@ export interface PublicTokens {
   geopasToken: string;
   siptToken: string;
   partyUserToken: string;
+  inventoryToken: string;
 }
